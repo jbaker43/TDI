@@ -3,6 +3,24 @@ from us import states
 import pandas as pd
 
 
+data_tables = {
+  'C24050_001E': 'Total',
+  'C24050_002E': 'Agriculture, forestry, fishing and hunting, and mining',
+  'C24050_003E': 'Construction',
+  'C24050_004E': 'Manufacturing',
+  'C24050_005E': 'Wholesale trade',
+  'C24050_006E': 'Retail trade',
+  'C24050_007E': 'Transportation and warehousing, and utilities',
+  'C24050_008E': 'Information',
+  'C24050_009E': 'Finance and insurance, and real estate, and rental and leasing',
+  'C24050_010E': 'Professional, scientific, and management, and administrative, and waste '
+                 'management services',
+  'C24050_011E': 'Educational services, and health care and social assistance',
+  'C24050_012E': 'Arts, entertainment, and recreation, and accommodation and food services',
+  'C24050_013E': 'Other services, except public administration',
+  'C24050_014E': 'Public administration',
+}
+
 def census_api_request():
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
