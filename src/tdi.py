@@ -15,6 +15,7 @@ app = flask.Flask(__name__, template_folder="templates")
 csrf = CSRFProtect(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 
+
 def get_state_data():
 
     # Will stores information about state
@@ -36,13 +37,15 @@ def get_state_data():
         counties = {}
 
         # Filters list of counties to only those from this state
-        df = counties_df[counties_df['USPS'].apply(lambda x: x.startswith(abbr))]
+        df = counties_df[counties_df['USPS'].apply(
+                lambda x: x.startswith(abbr))]
 
         # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
             counties[row['NAME']] = row['GEOID'][2:]
 
-        # Stores information about a state (which includes nested dictionary of counties)
+        # Stores information about a state
+        # (which includes nested dictionary of counties)
         states[str(state)] = {
             "abbr": abbr,
             "fips": fips,
@@ -50,6 +53,7 @@ def get_state_data():
         }
 
     return states
+
 
 def get_state_choices():
     """
@@ -62,6 +66,7 @@ def get_state_choices():
         choices.append((key, key))
     return choices
 
+
 def get_county_choices(state):
     states = get_state_data()
     choices = []
@@ -69,8 +74,10 @@ def get_county_choices(state):
         choices.append((value, key))
     return choices
 
+
 class State_Form(FlaskForm):
     state = SelectField('State', choices=get_state_choices())
+
 
 class County_Form(FlaskForm):
     county = SelectField('County', validate_choice=False)
@@ -89,6 +96,7 @@ def state_query():
 
     return render_template('state.html', form=form)
 
+
 @app.route('/query/<state>/')
 def county_query(state):
     # replace this with a query from whatever database you're using
@@ -97,6 +105,7 @@ def county_query(state):
     form.county.choices = get_county_choices(state)
 
     return render_template('county.html', form=form)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
