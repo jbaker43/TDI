@@ -22,7 +22,7 @@ def get_state_data():
     states = dict()
 
     # Read in a list of counties for all states
-    counties_df = pandas.read_csv('data/counties.txt', sep='\t')
+    counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
 
     # Converts GEOID to string for easier data manipulation
     counties_df['GEOID'] = counties_df['GEOID'].apply(str)
