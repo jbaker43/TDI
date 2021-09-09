@@ -42,7 +42,7 @@ def get_state_data():
 
         # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
-            counties[row['NAME']] = row['GEOID'][2:]
+            counties[row['NAME']] = row['GEOID'][-3:]
 
         # Stores information about a state
         # (which includes nested dictionary of counties)
@@ -82,13 +82,15 @@ class State_Form(FlaskForm):
 class County_Form(FlaskForm):
     county = SelectField('County', validate_choice=False)
 
+class Table_Form(FlaskForm):
+    table = SelectField('Table', validate_choice=False)
+
 
 @app.route("/", methods=["GET", "POST"])
 def state_query():
     form = State_Form()
 
     if flask.request.method == 'POST':
-        # replace this with an insert into whatever database you're using
         for item in flask.request.form.items():
             if 'state' in item:
                 field, state = item
@@ -97,15 +99,33 @@ def state_query():
     return render_template('state.html', form=form)
 
 
-@app.route('/query/<state>/')
+@app.route('/query/<state>/', methods=["GET", "POST"])
 def county_query(state):
-    # replace this with a query from whatever database you're using
     form = County_Form()
-    print(get_county_choices(state))
     form.county.choices = get_county_choices(state)
+
+    if flask.request.method == 'POST':
+        print(flask.request.form)
+        for item in flask.request.form.items():
+            if 'county' in item:
+                field, code = item
+        return redirect(url_for('table_query',
+                                state=state,
+                                county_code=code))
 
     return render_template('county.html', form=form)
 
+
+@app.route('/query/<state>/<county_code>',
+           methods=["GET", "POST"])
+def table_query(state, county_code):
+    """
+    This route takes a selected state and county
+    and allows a user to choose a table to view
+    """
+    form = Table_Form()
+
+    return render_template('table.html', form=form)
 
 if __name__ == "__main__":
     app.run(debug=True)

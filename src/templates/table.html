@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TDI</title>
+</head>
+<body>
+    <p>Select a Census Table</p>
+    <!-- <select name= states method="GET" action="/">
+        {% for state in states %}
+        <option value= "{{state}}" SELECTED>{{state}}</option>"
+        {% endfor %}
+    </select>
+</select> -->
+    <form method="POST">
+        {{ form.csrf_token }}
+        {{ form.table }}
+        <input type="submit">
+    </form>
+
+</body>
+</html>
