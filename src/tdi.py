@@ -16,7 +16,15 @@ csrf = CSRFProtect(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 
 
-def get_state_data():
+def get_state_data() -> dict:
+    """
+    This function creates a dictionary of information about
+    a state.
+    Specifically, this collects a states FIPS code, abbreviation,
+    and all its counties.
+
+    Returns: dictionary
+    """
 
     # Will stores information about state
     states = dict()
@@ -38,7 +46,7 @@ def get_state_data():
 
         # Filters list of counties to only those from this state
         df = counties_df[counties_df['USPS'].apply(
-                lambda x: x.startswith(abbr))]
+            lambda x: x.startswith(abbr))]
 
         # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
@@ -55,10 +63,12 @@ def get_state_data():
     return states
 
 
-def get_state_choices():
+def get_state_choices() -> tuple:
     """
     Get (fips, state) tuple for each state
     This is used in flask form choice parameters
+
+    Returns: tuple
     """
     states = get_state_data()
     choices = []
@@ -67,7 +77,13 @@ def get_state_choices():
     return choices
 
 
-def get_county_choices(state):
+def get_county_choices(state: str) -> tuple:
+    """
+    Takes list of counties for a state, and puts them in
+    flask-wtf form format.
+
+    Returns: tuple
+    """
     states = get_state_data()
     choices = []
     for key, value in states[state]['counties'].items():
@@ -81,6 +97,7 @@ class State_Form(FlaskForm):
 
 class County_Form(FlaskForm):
     county = SelectField('County', validate_choice=False)
+
 
 class Table_Form(FlaskForm):
     table = SelectField('Table', validate_choice=False)
@@ -126,6 +143,7 @@ def table_query(state, county_code):
     form = Table_Form()
 
     return render_template('table.html', form=form)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
