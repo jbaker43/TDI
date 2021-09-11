@@ -122,7 +122,6 @@ def county_query(state):
     form.county.choices = get_county_choices(state)
 
     if flask.request.method == 'POST':
-        print(flask.request.form)
         for item in flask.request.form.items():
             if 'county' in item:
                 field, code = item
