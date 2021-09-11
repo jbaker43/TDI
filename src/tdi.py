@@ -22,7 +22,7 @@ def get_state_data():
     states = dict()
 
     # Read in a list of counties for all states
-    counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
+    counties_df = pandas.read_csv('data/counties.txt', sep='\t')
 
     # Converts GEOID to string for easier data manipulation
     counties_df['GEOID'] = counties_df['GEOID'].apply(str)
@@ -97,7 +97,7 @@ def state_query():
     return render_template('state.html', form=form)
 
 
-@app.route('/query/<state>/')
+@app.route('/query/<state>/', methods=["GET", "POST"])
 def county_query(state):
     # replace this with a query from whatever database you're using
     form = County_Form()
