@@ -40,7 +40,7 @@ def get_state_data():
 
         # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
-            counties[row['NAME']] = row['GEOID'][2:]
+            counties[row['NAME']] = row['GEOID'][-3:]
 
         # Stores information about a state
         # (which includes nested dictionary of counties)
@@ -121,9 +121,8 @@ def table_query(state, county_code):
     s = us.states.lookup(state)
     state_fip = s.fips
 
-    print(county_code)
     df = censusapi.census_api_request(state_fip, county_code)
-    return render_template('table.html',  tables=[df.to_html(classes='table')], titles=df.columns.values)
+    return render_template('table.html',  tables=[df.to_html(classes='table table-hover table-dark')], titles=df.columns.values)
 
 
 if __name__ == "__main__":
