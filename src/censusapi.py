@@ -74,6 +74,7 @@ def census_api_request(state, county):
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')
     print(df)
+    return df
 
 
 if __name__ == '__main__':

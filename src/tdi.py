@@ -1,13 +1,12 @@
 import os
-
 import flask
+import us
+import pandas
+import censusapi
 from flask import render_template, redirect, url_for
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import SelectField
-
-import us
-import pandas
 
 SECRET_KEY = os.urandom(32)
 
@@ -17,12 +16,11 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 
 def get_state_data():
-
     # Will stores information about state
     states = dict()
 
     # Read in a list of counties for all states
-    counties_df = pandas.read_csv('data/counties.txt', sep='\t')
+    counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
 
     # Converts GEOID to string for easier data manipulation
     counties_df['GEOID'] = counties_df['GEOID'].apply(str)
@@ -38,7 +36,7 @@ def get_state_data():
 
         # Filters list of counties to only those from this state
         df = counties_df[counties_df['USPS'].apply(
-                lambda x: x.startswith(abbr))]
+            lambda x: x.startswith(abbr))]
 
         # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
@@ -99,12 +97,33 @@ def state_query():
 
 @app.route('/query/<state>/', methods=["GET", "POST"])
 def county_query(state):
-    # replace this with a query from whatever database you're using
     form = County_Form()
-    print(get_county_choices(state))
     form.county.choices = get_county_choices(state)
 
+    if flask.request.method == 'POST':
+        for item in flask.request.form.items():
+            if 'county' in item:
+                field, code = item
+        return redirect(url_for('table_query',
+                                state=state,
+                                county_code=code))
+
     return render_template('county.html', form=form)
+
+
+@app.route('/query/<state>/<county_code>', methods=["GET", "POST"])
+def table_query(state, county_code):
+    """
+    This route takes a selected state and county
+    and allows a user to choose a table to view
+    """
+    # Lookup state and get fips code
+    s = us.states.lookup(state)
+    state_fip = s.fips
+
+    print(county_code)
+    df = censusapi.census_api_request(state_fip, county_code)
+    return render_template('table.html',  tables=[df.to_html(classes='table')], titles=df.columns.values)
 
 
 if __name__ == "__main__":
