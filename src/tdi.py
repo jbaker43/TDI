@@ -1,13 +1,12 @@
 import os
-
 import flask
+import us
+import pandas
+import censusapi
 from flask import render_template, redirect, url_for
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from wtforms import SelectField
-
-import us
-import pandas
 
 SECRET_KEY = os.urandom(32)
 
@@ -30,7 +29,7 @@ def get_state_data() -> dict:
     states = dict()
 
     # Read in a list of counties for all states
-    counties_df = pandas.read_csv('data/counties.txt', sep='\t')
+    counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
 
     # Converts GEOID to string for easier data manipulation
     counties_df['GEOID'] = counties_df['GEOID'].apply(str)
@@ -132,16 +131,21 @@ def county_query(state):
     return render_template('county.html', form=form)
 
 
-@app.route('/query/<state>/<county_code>',
-           methods=["GET", "POST"])
+@app.route('/query/<state>/<county_code>', methods=["GET", "POST"])
 def table_query(state, county_code):
     """
     This route takes a selected state and county
     and allows a user to choose a table to view
     """
-    form = Table_Form()
+    # Lookup state and get fips code
+    s = us.states.lookup(state)
+    state_fip = s.fips
 
-    return render_template('table.html', form=form)
+    df = censusapi.census_api_request(state_fip, county_code)
+    table_classes = 'table table-hover table-dark'
+    return render_template('table.html',
+                           tables=[df.to_html(classes=table_classes)],
+                           titles=df.columns.values)
 
 
 if __name__ == "__main__":
