@@ -20,7 +20,12 @@ def get_state_data():
     states = dict()
 
     # Read in a list of counties for all states
-    counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
+    if os.path.exists('data/counties.txt'):
+        counties_df = pandas.read_csv('data/counties.txt', sep='\t')
+    elif os.path.exists('../data/counties.txt'):
+        counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
+    else:
+        raise FileNotFoundError("county data file not found")
 
     # Converts GEOID to string for easier data manipulation
     counties_df['GEOID'] = counties_df['GEOID'].apply(str)
