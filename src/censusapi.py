@@ -63,6 +63,8 @@ def generate_table(census_api, state, county, codes):
                    )
     # Add column for labor percentages
     df = df.assign(Percent=df['Estimate']*100/df['Estimate'][1:].sum())
+    # Rounding the percent column to the hundredths place
+    df['Percent'] = df['Percent'].astype(float).round(2)
     pd.set_option('display.max_columns', None)
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')
