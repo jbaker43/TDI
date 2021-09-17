@@ -68,6 +68,8 @@ def census_api_request(state, county):
     dm = pd.DataFrame(margin_of_error).transpose()
     # Merging the values from the margin of error DF and creating a new column in our original DF
     df = df.assign(Margin_of_Error=dm.values)
+    # Add column for labor percentages
+    df = df.assign(Percent=df['Estimate'][1:-2]*100/df['Estimate'][2:-2].sum())
     # Cleaning up the data frame by removing values not useful to the table
     df = df.drop(['NAME', 'state', 'county'])
     pd.set_option('display.max_columns', None)
