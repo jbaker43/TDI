@@ -14,6 +14,8 @@ app = flask.Flask(__name__, template_folder="templates")
 csrf = CSRFProtect(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 
+states_data = None
+
 
 def get_state_data() -> dict:
     """
@@ -74,9 +76,10 @@ def get_state_choices() -> tuple:
 
     Returns: tuple
     """
-    states = get_state_data()
+    global states_data
+    states_data = get_state_data()
     choices = []
-    for key, value in states.items():
+    for key, value in states_data.items():
         choices.append((key, key))
     return choices
 
@@ -88,9 +91,8 @@ def get_county_choices(state: str) -> tuple:
 
     Returns: tuple
     """
-    states = get_state_data()
     choices = []
-    for key, value in states[state]['counties'].items():
+    for key, value in states_data[state]['counties'].items():
         choices.append((value, key))
     return choices
 
