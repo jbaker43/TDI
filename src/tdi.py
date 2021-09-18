@@ -77,7 +77,7 @@ def get_state_choices() -> tuple:
     Returns: tuple
     """
     global states_data
-    if states_data == None:
+    if states_data is None:
         states_data = get_state_data()
     choices = []
     for key, value in states_data.items():
