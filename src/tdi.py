@@ -69,6 +69,13 @@ def get_state_data() -> dict:
     return states
 
 
+def get_county_name(state, county_code):
+    states = get_state_data()
+    for key, value in states[state]['counties'].items():
+        if value == county_code:
+            return key
+
+
 def get_state_choices() -> tuple:
     """
     Get (fips, state) tuple for each state
@@ -149,8 +156,9 @@ def table_query(state, county_code):
     s = us.states.lookup(state)
     state_fip = s.fips
     state_name = s.name
+    county_name = get_county_name(state, county_code)
     df = censusapi.census_api_request(state_fip, county_code)
-    table_title = "Data for " + state_name
+    table_title = "Data for " + county_name + ', ' + state_name
     # Turning the pandas dataframes to html to display
     occupation = df[0].to_html(classes='table table-hover table-dark', justify='start')
     industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
