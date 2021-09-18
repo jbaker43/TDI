@@ -2,6 +2,9 @@ import us.states
 from census import Census
 from us import states
 import pandas as pd
+import os
+import json
+from datetime import datetime
 
 
 industry_map = {
@@ -63,25 +66,114 @@ def census_api_request(state, county):
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
     c = Census(api_key)
-    occupation_table = generate_table(c, state, county, occupation_map)
-    industry_table = generate_table(c, state, county, industry_map)
-    education_table = generate_table(c, state, county, education_map)
+    occupation_table = generate_table(c, state, county, occupation_map, "occupation")
+    industry_table = generate_table(c, state, county, industry_map, "industry")
+    education_table = generate_table(c, state, county, education_map, "education")
 
     # return an array of pandas data frames
     return [occupation_table, industry_table, education_table]
 
 
-def generate_table(census_api, state, county, codes):
+def generate_table(census_api, state, county, codes, data_name):
+    if os.path.isdir('../data/'):
+        data_path = os.path.join('../data/census_data/',
+                                 state, county, data_name)
+    elif os.path.isdir('data/'):
+        data_path = os.path.join('data/census_data/',
+                                 state, county, data_name)
+    else:
+        raise FileNotFoundError("Data path is not found")
+
+
+    # Ensure that data path exists, if it doesn't already
+    os.makedirs(data_path, exist_ok=True)
+
+    # Ensures that cached data is not older than 1 day
+    # If timestamp is found, it will read in the date listed.
+    # If the date was over 24 hours ago, the files are deleted so they can
+    # be re-queried in the next step.
+    time_file_path = os.path.join(data_path, 'cat_last_modified.txt')
+    if os.path.isfile(time_file_path):
+        with open(time_file_path) as file:
+            time_str = file.read()
+            timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+            time_elapsed = datetime.now() - timestamp
+            if time_elapsed.total_seconds() > 86400:
+                os.remove(os.path.join(data_path,'categories.json'))
+                os.remove(os.path.join(data_path,'cat_last_modified.txt'))
+
+
+    # Ensures that cached data is not older than 1 day
+    # If timestamp is found, it will read in the date listed.
+    # If the date was over 24 hours ago, the files are deleted so they can
+    # be re-queried in the next step.
+    time_file_path = os.path.join(data_path, 'margin_last_modified.txt')
+    if os.path.isfile(time_file_path):
+        with open(time_file_path) as file:
+            time_str = file.read()
+            timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+            time_elapsed = datetime.now() - timestamp
+            if time_elapsed.total_seconds() > 86400:
+                os.remove(os.path.join(data_path,'margin_of_error.json'))
+                os.remove(os.path.join(data_path,'margin_last_modified.txt'))
+
+
     # Using the Census wrapper to query the Census API and get occupation data. The state is TN  (states.TN.fips returns
     # 47, the number the census uses to represent the state of TN), and the county is Hamilton County (065).
     # NOTE: The data chosen was just to test the wrapper. These values can/should change. We can also change it to
     # accept a user's selected input such as state, county, region, etc.
-    categories = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county)
+
+    # Creates path for where data should be stored
+    cat_file_path = os.path.join(data_path, 'categories.json')
+
+    # Checks if file exists in cache
+    if os.path.isfile(cat_file_path):
+        # Load data from cache
+        categories = [json.load(open(cat_file_path))]
+    else:
+        # Query data from the census API
+        categories = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county)
+
+        # Write data to cache for later usage
+        json_obj = json.dumps(categories[0], indent = 2)
+        with open(cat_file_path, "w") as outfile:
+            outfile.write(json_obj)
+        del json_obj
+
+        # Record timestamp of data retrieved for cache expiration
+        time_file_path = os.path.join(data_path,
+                                      'cat_last_modified.txt')
+        with open(time_file_path, "w") as outfile:
+            now_str = datetime.strftime(datetime.now(),'%m/%d/%Y %H:%M:%S')
+            outfile.write(now_str)
+
     # Query the margin of error for the above data
-    margin_of_error = census_api.acs5.state_county(append_in_list(codes, 'M'), state, county)
+    margin_file_path = os.path.join(data_path, 'margin_of_error.json')
+
+    # Checks if file exists in cache
+    if os.path.isfile(margin_file_path):
+        # Load data from cache
+        margin_of_error = [json.load(open(margin_file_path))]
+    else:
+        # Query data from the census API
+        margin_of_error = census_api.acs5.state_county(append_in_list(codes, 'M'), state, county)
+
+        # Write data to cache for later usage
+        json_obj = json.dumps(margin_of_error[0], indent = 2)
+        with open(margin_file_path, "w") as outfile:
+            outfile.write(json_obj)
+        del json_obj
+
+        # Record timestamp of data retrieved for cache expiration
+        time_file_path = os.path.join(data_path,
+                                      'margin_last_modified.txt')
+        with open(time_file_path, "w") as outfile:
+            now_str = datetime.strftime(datetime.now(),'%m/%d/%Y %H:%M:%S')
+            outfile.write(now_str)
+
+
     # Using the occupational data obtained from the Census wrapper, we create a pandas data frame to display the info
     # and then transpose the data frame (DF) to have the occupations be the index of the DF.
-
     df = pd.DataFrame(categories).transpose()
     # Create a DF for the margin of error
     dm = pd.DataFrame(margin_of_error).transpose()
