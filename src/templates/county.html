@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+    <title>TDI</title>
+</head>
+<body>
+
+    <div class="d-flex justify-content-center align-items-center p-4">
+        <h3 class="fw-bolder">Talent Development Initiative</h3>
+    </div>
+
+    <div class="container p-2 mt-5 pt-5">
+        <div id="spinner" role="status"></div>
+        <h5 class="m-4">Select a County</h5>
+        <form method="POST">
+            {{ form.csrf_token }}
+            {{ form.county(class_="form-select m-4") }}
+            <div class="d-grid col-6 mx-auto p-4">
+              <input id="submitBtn" class="btn btn-primary btn-lg" onclick="spinner()" type="submit" value="Submit">
+
+            </div>
+        </form>
+    </div>
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+    <script>
+        let spinner = () =>{
+            let parent = document.getElementById('spinner')
+            parent.className = 'd-grid spinner-border text-primary p-4 mx-auto'
+            let loading = document.createElement('span')
+            loading.className = 'visually-hidden'
+            loading.textContent = 'Loading...'
+            parent.appendChild(loading)
+        }
+    </script>
+</body>
+</html>
