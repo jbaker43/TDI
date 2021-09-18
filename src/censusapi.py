@@ -14,7 +14,7 @@ industry_map = {
     'C24050_008': 'Information',
     'C24050_009': 'Finance and insurance, and real estate, and rental and leasing',
     'C24050_010': 'Professional, scientific, and management, and administrative, and waste '
-                   'management services',
+                  'management services',
     'C24050_011': 'Educational services, and health care and social assistance',
     'C24050_012': 'Arts, entertainment, and recreation, and accommodation and food services',
     'C24050_013': 'Other services, except public administration',
@@ -29,6 +29,33 @@ occupation_map = {
     'C24060_005': 'Natural resources, construction, and maintenance occupations',
     'C24060_006': 'Production, transportation, and material moving occupations',
 }
+education_map = {
+        'B15003_001': 'Total',
+        'B15003_002': 'No Schooling Completed',
+        'B15003_003': 'Nursery School',
+        'B15003_004': 'Kindergarten',
+        'B15003_005': '1st grade',
+        'B15003_006': '2nd grade',
+        'B15003_007': '3rd grade',
+        'B15003_008': '4th grade',
+        'B15003_009': '5th grade',
+        'B15003_010': '6th grade',
+        'B15003_011': '7th grade',
+        'B15003_012': '8th grade',
+        'B15003_013': '9th grade',
+        'B15003_014': '10th grade',
+        'B15003_015': '11th grade',
+        'B15003_016': '12th grade, no diploma',
+        'B15003_017': 'Regular high school diploma',
+        'B15003_018': 'GED or alternative credential',
+        'B15003_019': 'Some college, less than 1 year',
+        'B15003_020': 'Some college, 1 or more years, no degree',
+        'B15003_021': 'Associate\'s degree',
+        'B15003_022': 'Bachelor\'s degree',
+        'B15003_023': 'Master\'s degree',
+        'B15003_024': 'Professional school degree',
+        'B15003_025': 'Doctorate degree',
+}
 
 
 def census_api_request(state, county):
@@ -37,8 +64,10 @@ def census_api_request(state, county):
     c = Census(api_key)
     occupation_table = generate_table(c, state, county, occupation_map)
     industry_table = generate_table(c, state, county, industry_map)
+    education_table = generate_table(c, state, county, education_map)
+    # return an array of pandas data frames
+    return [occupation_table, industry_table, education_table]
 
-    return occupation_table
 
 def generate_table(census_api, state, county, codes):
     # Using the Census wrapper to query the Census API and get occupation data. The state is TN  (states.TN.fips returns
@@ -62,9 +91,13 @@ def generate_table(census_api, state, county, codes):
                    columns={0: 'Estimate'}
                    )
     # Add column for labor percentages
-    df = df.assign(Percent=df['Estimate']*100/df['Estimate'][1:].sum())
+    df = df.assign(Percent=df['Estimate'] * 100 / df['Estimate'][1:].sum())
     # Rounding the percent column to the hundredths place
     df['Percent'] = df['Percent'].astype(float).round(2)
+    # This adds the percent sign but be careful because it casts as a string type
+    df['Percent'] = df['Percent'].astype(str) + '%'
+    # This adds +/- sign but same as above, be careful as it casts as a string type
+    df['Margin_of_Error'] = '+/- ' + df['Margin_of_Error'].astype(str)
     pd.set_option('display.max_columns', None)
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')

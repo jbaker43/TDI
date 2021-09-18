@@ -10,10 +10,56 @@
     <title>TDI</title>
 </head>
 <body>
-    {% for table in tables %}
-            {{titles[loop.index]}}
-            {{ table|safe }}
-    {% endfor %}
+    <!-- TDI Title  -->
+    <div class="bg-dark text-white pt-4 pb-4">
+        <div class="d-flex flex-column justify-content-center align-items-center p-4">
+            <h3 class="fw-bold p-2">Talent Development Initiative</h3>
+            <h4 class="fw-bolder p-2">{{ title }}</h4>
+            <div class="p-4 d-grid col-2 mx-auto">
+                <a class="btn btn-outline-light" href="/" role="button">Run Search Again</a>
+            </div>
+        </div>
+    </div>
+    <!-- Table Nav Pill List -->
+    <div class="p-4">
+            <ul class="nav nav-tabs nav-pills justify-content-center m-2" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="labor" data-bs-toggle="tab" data-bs-target="#labor-force" type="button" role="tab" aria-controls="labor-force" aria-selected="true">Labor Force</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="edu" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab" aria-controls="education" aria-selected="false">Education</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="socio" data-bs-toggle="tab" data-bs-target="#socioeconomic" type="button" role="tab" aria-controls="socioeconomic" aria-selected="false">Socioeconomic</button>
+                </li>
+            </ul>
+        <!-- Tables -->
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active pt-2 " id="labor-force" role="tabpanel" aria-labelledby="labor-force">
+                <div class="d-flex justify-content-center align-items-center p-4">
+                    <h4 class="fw-bold"><u>Labor Force Characteristics by Occupation and Industry</u></h4>
+                </div>
+                <h5 class="p-2">Occupation by Class of Worker for the Civilian Employed Population 16 Years and Over:</h5>
+                <div class="table-responsive-sm">
+                    {{ tables[0]|safe }}
+                    <hr>
+                </div>
+                <h5 class="p-2">Industry by Occupation for the Civilian Employed Population 16 Years and Over:</h5>
+                <div class="table-responsive-sm">
+                    {{ tables[1]|safe }}
+
+                </div>
+            </div>
+            <div class="tab-pane fade pt-2" id="education" role="tabpanel" aria-labelledby="education-tab">
+                <div class="d-flex justify-content-center align-items-center p-4">
+                    <h4 class="fw-bold"><u>Educational Attainment</u></h4>
+                </div>
+                <h5 class="p-2">Educational Attainment for the Population 25 Years and Over:</h5>
+                {{ tables[2]|safe }}
+            </div>
+            <div class="tab-pane fade pt-2" id="socioeconomic" role="tabpanel" aria-labelledby="socioeconomic-tab">{{ tables[1]|safe }}</div>
+        </div>
+    </div>
 
 
     <!-- Option 1: Bootstrap Bundle with Popper -->
