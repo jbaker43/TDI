@@ -3,6 +3,7 @@ from census import Census
 from us import states
 import pandas as pd
 
+
 industry_map = {
     'C24050_001': 'Total',
     'C24050_002': 'Agriculture, forestry, fishing and hunting, and mining',
@@ -65,6 +66,7 @@ def census_api_request(state, county):
     occupation_table = generate_table(c, state, county, occupation_map)
     industry_table = generate_table(c, state, county, industry_map)
     education_table = generate_table(c, state, county, education_map)
+
     # return an array of pandas data frames
     return [occupation_table, industry_table, education_table]
 
@@ -79,6 +81,7 @@ def generate_table(census_api, state, county, codes):
     margin_of_error = census_api.acs5.state_county(append_in_list(codes, 'M'), state, county)
     # Using the occupational data obtained from the Census wrapper, we create a pandas data frame to display the info
     # and then transpose the data frame (DF) to have the occupations be the index of the DF.
+
     df = pd.DataFrame(categories).transpose()
     # Create a DF for the margin of error
     dm = pd.DataFrame(margin_of_error).transpose()
@@ -101,7 +104,6 @@ def generate_table(census_api, state, county, codes):
     pd.set_option('display.max_columns', None)
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')
-    print(df)
     return df
 
 

@@ -77,7 +77,8 @@ def get_state_choices() -> tuple:
     Returns: tuple
     """
     global states_data
-    states_data = get_state_data()
+    if states_data == None:
+        states_data = get_state_data()
     choices = []
     for key, value in states_data.items():
         choices.append((key, key))
@@ -147,12 +148,14 @@ def table_query(state, county_code):
     # Lookup state and get fips code
     s = us.states.lookup(state)
     state_fip = s.fips
-
+    state_name = s.name
     df = censusapi.census_api_request(state_fip, county_code)
-    table_classes = 'table table-hover table-dark'
-    return render_template('table.html',
-                           tables=[df.to_html(classes=table_classes)],
-                           titles=df.columns.values)
+    table_title = "Data for " + state_name
+    # Turning the pandas dataframes to html to display
+    occupation = df[0].to_html(classes='table table-hover table-dark', justify='start')
+    industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
+    edu = df[2].to_html(classes='table table-hover table-dark', justify='start')
+    return render_template('table.html',  tables=[occupation, industry, edu], title=table_title,)
 
 
 if __name__ == "__main__":
