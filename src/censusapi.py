@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import json
 from datetime import datetime
+from pathlib import Path
 
 
 industry_map = {
@@ -75,7 +76,7 @@ def census_api_request(state, county):
 
 
 def generate_table(census_api, state, county, codes, data_name):
-    if os.path.isdir('../data/'):
+    if os.path.isdir(Path('../data/')):
         data_path = os.path.join('../data/census_data/',
                                  state, county, data_name)
     elif os.path.isdir('data/'):
@@ -84,6 +85,7 @@ def generate_table(census_api, state, county, codes, data_name):
     else:
         raise FileNotFoundError("Data path is not found")
 
+    data_path = Path(data_path)
 
     # Ensure that data path exists, if it doesn't already
     os.makedirs(data_path, exist_ok=True)
