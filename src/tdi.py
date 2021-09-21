@@ -158,13 +158,16 @@ def table_query(state, county_code):
     state_fip = s.fips
     state_name = s.name
     county_name = get_county_name(state, county_code)
-    df = censusapi.census_api_request(state_fip, county_code)
     table_title = "Data for " + county_name + ', ' + state_name
+    try:
+        df = censusapi.census_api_request(state_fip, county_code)
+    except:
+        return render_template('error.html', title=table_title)
     # Turning the pandas dataframes to html to display
     occupation = df[0].to_html(classes='table table-hover table-dark', justify='start')
     industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
     edu = df[2].to_html(classes='table table-hover table-dark', justify='start')
-    return render_template('table.html',  tables=[occupation, industry, edu], title=table_title,)
+    return render_template('table.html',  tables=[occupation, industry, edu], title=table_title)
 
 
 if __name__ == "__main__":
