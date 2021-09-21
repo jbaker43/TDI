@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import flask
 import us
 import pandas
@@ -31,10 +32,10 @@ def get_state_data() -> dict:
     states = dict()
 
     # Read in a list of counties for all states
-    if os.path.exists('data/counties.txt'):
-        counties_df = pandas.read_csv('data/counties.txt', sep='\t')
-    elif os.path.exists('../data/counties.txt'):
-        counties_df = pandas.read_csv('../data/counties.txt', sep='\t')
+    if os.path.exists(Path('data/counties.txt')):
+        counties_df = pandas.read_csv(Path('data/counties.txt'), sep='\t')
+    elif os.path.exists(Path('../data/counties.txt')):
+        counties_df = pandas.read_csv(Path('../data/counties.txt'), sep='\t')
     else:
         raise FileNotFoundError("county data file not found")
 
