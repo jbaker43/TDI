@@ -234,5 +234,8 @@ if __name__ == "__main__":
     for state_key, state_value in states.items():
         for county_key, county_value in state_value['counties'].items():
             print("Caching " + county_key + ", " + state_key)
-            census_api_request(state_value['fips'], county_value)
+            try:
+                census_api_request(state_value['fips'], county_value)
+            except:
+                print("Caching failed for " + county_key + ", " + state_key)
 
