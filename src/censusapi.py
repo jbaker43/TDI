@@ -223,7 +223,7 @@ def credential_holder(census_api, state, county, codes):
         df = pandas.DataFrame(credentials)
         df = df.drop(columns=['state', 'county'])
         df = df.rename(columns=lambda code: codes[code[:-1]],
-                       # This below line just renames the column header to year
+                       # This below line just renames the index header to year
                        index={0: year}
                        )
         df_array.append(df)
