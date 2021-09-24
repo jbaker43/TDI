@@ -74,7 +74,7 @@ credential_holder_map = {
 }
 
 
-def census_api_request(state, county, ):
+def census_api_request(state, county):
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
     c = Census(api_key)
