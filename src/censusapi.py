@@ -1,3 +1,4 @@
+import pandas
 import us.states
 from census import Census
 from us import states
@@ -6,7 +7,6 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-
 
 industry_map = {
     'C24050_001': 'Total',
@@ -35,44 +35,55 @@ occupation_map = {
     'C24060_006': 'Production, transportation, and material moving occupations',
 }
 education_map = {
-        'B15003_001': 'Total',
-        'B15003_002': 'No Schooling Completed',
-        'B15003_003': 'Nursery School',
-        'B15003_004': 'Kindergarten',
-        'B15003_005': '1st grade',
-        'B15003_006': '2nd grade',
-        'B15003_007': '3rd grade',
-        'B15003_008': '4th grade',
-        'B15003_009': '5th grade',
-        'B15003_010': '6th grade',
-        'B15003_011': '7th grade',
-        'B15003_012': '8th grade',
-        'B15003_013': '9th grade',
-        'B15003_014': '10th grade',
-        'B15003_015': '11th grade',
-        'B15003_016': '12th grade, no diploma',
-        'B15003_017': 'Regular high school diploma',
-        'B15003_018': 'GED or alternative credential',
-        'B15003_019': 'Some college, less than 1 year',
-        'B15003_020': 'Some college, 1 or more years, no degree',
-        'B15003_021': 'Associate\'s degree',
-        'B15003_022': 'Bachelor\'s degree',
-        'B15003_023': 'Master\'s degree',
-        'B15003_024': 'Professional school degree',
-        'B15003_025': 'Doctorate degree',
+    'B15003_001': 'Total',
+    'B15003_002': 'No Schooling Completed',
+    'B15003_003': 'Nursery School',
+    'B15003_004': 'Kindergarten',
+    'B15003_005': '1st grade',
+    'B15003_006': '2nd grade',
+    'B15003_007': '3rd grade',
+    'B15003_008': '4th grade',
+    'B15003_009': '5th grade',
+    'B15003_010': '6th grade',
+    'B15003_011': '7th grade',
+    'B15003_012': '8th grade',
+    'B15003_013': '9th grade',
+    'B15003_014': '10th grade',
+    'B15003_015': '11th grade',
+    'B15003_016': '12th grade, no diploma',
+    'B15003_017': 'Regular high school diploma',
+    'B15003_018': 'GED or alternative credential',
+    'B15003_019': 'Some college, less than 1 year',
+    'B15003_020': 'Some college, 1 or more years, no degree',
+    'B15003_021': 'Associate\'s degree',
+    'B15003_022': 'Bachelor\'s degree',
+    'B15003_023': 'Master\'s degree',
+    'B15003_024': 'Professional school degree',
+    'B15003_025': 'Doctorate degree',
+}
+credential_holder_map = {
+    'B23006_001': 'Total',
+    'B23006_002': 'Less than high school graduate',
+    'B23006_003': 'Less than high school graduate in labor force',
+    'B23006_009': 'High school graduate',
+    'B23006_010': 'High school graduate in labor force',
+    'B23006_016': 'Some college or associate\'s degree',
+    'B23006_017': 'Some college or associate\'s degree in labor force',
+    'B23006_023': 'Bachelor\'s degree or higher',
+    'B23006_024': 'Bachelor\'s degree or higher in labor force',
 }
 
 
-def census_api_request(state, county):
+def census_api_request(state, county, ):
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
     c = Census(api_key)
     occupation_table = generate_table(c, state, county, occupation_map, "occupation")
     industry_table = generate_table(c, state, county, industry_map, "industry")
     education_table = generate_table(c, state, county, education_map, "education")
-
+    credential_holder_table = credential_holder(c, state, county, credential_holder_map)
     # return an array of pandas data frames
-    return [occupation_table, industry_table, education_table]
+    return [occupation_table, industry_table, education_table, credential_holder_table]
 
 
 def generate_table(census_api, state, county, codes, data_name):
@@ -101,9 +112,8 @@ def generate_table(census_api, state, county, codes, data_name):
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
             if time_elapsed.total_seconds() > 86400:
-                os.remove(os.path.join(data_path,'categories.json'))
-                os.remove(os.path.join(data_path,'cat_last_modified.txt'))
-
+                os.remove(os.path.join(data_path, 'categories.json'))
+                os.remove(os.path.join(data_path, 'cat_last_modified.txt'))
 
     # Ensures that cached data is not older than 1 day
     # If timestamp is found, it will read in the date listed.
@@ -116,9 +126,8 @@ def generate_table(census_api, state, county, codes, data_name):
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
             if time_elapsed.total_seconds() > 86400:
-                os.remove(os.path.join(data_path,'margin_of_error.json'))
-                os.remove(os.path.join(data_path,'margin_last_modified.txt'))
-
+                os.remove(os.path.join(data_path, 'margin_of_error.json'))
+                os.remove(os.path.join(data_path, 'margin_last_modified.txt'))
 
     # Using the Census wrapper to query the Census API and get occupation data. The state is TN  (states.TN.fips returns
     # 47, the number the census uses to represent the state of TN), and the county is Hamilton County (065).
@@ -137,7 +146,7 @@ def generate_table(census_api, state, county, codes, data_name):
         categories = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county)
 
         # Write data to cache for later usage
-        json_obj = json.dumps(categories[0], indent = 2)
+        json_obj = json.dumps(categories[0], indent=2)
         with open(cat_file_path, "w") as outfile:
             outfile.write(json_obj)
         del json_obj
@@ -146,7 +155,7 @@ def generate_table(census_api, state, county, codes, data_name):
         time_file_path = os.path.join(data_path,
                                       'cat_last_modified.txt')
         with open(time_file_path, "w") as outfile:
-            now_str = datetime.strftime(datetime.now(),'%m/%d/%Y %H:%M:%S')
+            now_str = datetime.strftime(datetime.now(), '%m/%d/%Y %H:%M:%S')
             outfile.write(now_str)
 
     # Query the margin of error for the above data
@@ -161,7 +170,7 @@ def generate_table(census_api, state, county, codes, data_name):
         margin_of_error = census_api.acs5.state_county(append_in_list(codes, 'M'), state, county)
 
         # Write data to cache for later usage
-        json_obj = json.dumps(margin_of_error[0], indent = 2)
+        json_obj = json.dumps(margin_of_error[0], indent=2)
         with open(margin_file_path, "w") as outfile:
             outfile.write(json_obj)
         del json_obj
@@ -170,9 +179,8 @@ def generate_table(census_api, state, county, codes, data_name):
         time_file_path = os.path.join(data_path,
                                       'margin_last_modified.txt')
         with open(time_file_path, "w") as outfile:
-            now_str = datetime.strftime(datetime.now(),'%m/%d/%Y %H:%M:%S')
+            now_str = datetime.strftime(datetime.now(), '%m/%d/%Y %H:%M:%S')
             outfile.write(now_str)
-
 
     # Using the occupational data obtained from the Census wrapper, we create a pandas data frame to display the info
     # and then transpose the data frame (DF) to have the occupations be the index of the DF.
@@ -205,5 +213,28 @@ def append_in_list(list, suffix):
     return [x + suffix for x in list]
 
 
+def credential_holder(census_api, state, county, codes):
+    year = 2009
+    df_array = []
+    while year <= 2019:
+        credentials = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county, year=year)
+        df = pandas.DataFrame(credentials)
+        df = df.drop(columns=['state', 'county'])
+        df = df.rename(columns=lambda code: codes[code[:-1]],
+                       # This below line just renames the column header to estimate
+                       index={0: year}
+                       )
+        df_array.append(df)
+        year += 1
+    pd.set_option('display.max_columns', None)
+    df = pd.concat(df_array)
+    pd.options.display.float_format = '{:,.0f}'.format
+    return df
+
+
 if __name__ == '__main__':
+    api_key = "e47ca974808081f8978710f433125783362afc45"
+    # Supply the Census wrapper with an api key
+    c = Census(api_key)
+    credential_holder(c, '47', '065', credential_holder_map)
     census_api_request('01', '001')

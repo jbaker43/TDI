@@ -167,7 +167,8 @@ def table_query(state, county_code):
     occupation = df[0].to_html(classes='table table-hover table-dark', justify='start')
     industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
     edu = df[2].to_html(classes='table table-hover table-dark', justify='start')
-    return render_template('table.html',  tables=[occupation, industry, edu], title=table_title)
+    cre = df[3].to_html(classes='table table-hover table-dark', justify='start')
+    return render_template('table.html',  tables=[occupation, industry, edu, cre], title=table_title)
 
 
 if __name__ == "__main__":
