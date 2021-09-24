@@ -214,14 +214,16 @@ def append_in_list(list, suffix):
 
 
 def credential_holder(census_api, state, county, codes):
+    # Start year of the Census ACS5
     year = 2009
     df_array = []
+    # Create a pandas DF for each year of the ACS5 starting from 2009 - 2019
     while year <= 2019:
         credentials = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county, year=year)
         df = pandas.DataFrame(credentials)
         df = df.drop(columns=['state', 'county'])
         df = df.rename(columns=lambda code: codes[code[:-1]],
-                       # This below line just renames the column header to estimate
+                       # This below line just renames the column header to year
                        index={0: year}
                        )
         df_array.append(df)
