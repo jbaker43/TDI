@@ -75,16 +75,16 @@ def census_api_request(state, county):
     return [occupation_table, industry_table, education_table]
 
 
-def generate_table(census_api, state, county, codes, data_name):
+def generate_table(census_api, state, county, codes, data_name, year=2019):
     # How long data can remain in cache before refresh
     # stored in days.
     cache_time = 182
 
     if os.path.isdir(Path('../data/')):
-        data_path = os.path.join('../data/census_data/',
+        data_path = os.path.join('../data/census_data/', str(year),
                                  state, county, data_name)
     elif os.path.isdir('data/'):
-        data_path = os.path.join('data/census_data/',
+        data_path = os.path.join('data/census_data/', str(year),
                                  state, county, data_name)
     else:
         raise FileNotFoundError("Data path is not found")
