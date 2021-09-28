@@ -76,6 +76,10 @@ def census_api_request(state, county):
 
 
 def generate_table(census_api, state, county, codes, data_name):
+    # How long data can remain in cache before refresh
+    # stored in days.
+    cache_time = 182
+
     if os.path.isdir(Path('../data/')):
         data_path = os.path.join('../data/census_data/',
                                  state, county, data_name)
@@ -100,7 +104,9 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
+            # Converts seconds to days
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
                 os.remove(os.path.join(data_path,'categories.json'))
                 os.remove(os.path.join(data_path,'cat_last_modified.txt'))
 
@@ -115,7 +121,8 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
                 os.remove(os.path.join(data_path,'margin_of_error.json'))
                 os.remove(os.path.join(data_path,'margin_last_modified.txt'))
 
