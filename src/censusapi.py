@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import json
 from datetime import datetime
+from datetime import date
 from pathlib import Path
 
 industry_map = {
@@ -73,6 +74,10 @@ credential_holder_map = {
     'B23006_024': 'Bachelor\'s degree or higher in labor force',
 }
 
+# How long data can remain in cache before refresh
+# stored in days.
+cache_time = 182
+
 
 def census_api_request(state, county):
     api_key = "e47ca974808081f8978710f433125783362afc45"
@@ -81,16 +86,12 @@ def census_api_request(state, county):
     occupation_table = generate_table(c, state, county, occupation_map, "occupation")
     industry_table = generate_table(c, state, county, industry_map, "industry")
     education_table = generate_table(c, state, county, education_map, "education")
-    credential_holder_table = credential_holder(c, state, county, credential_holder_map)
+    credential_holder_table = credential_holder(c, state, county, credential_holder_map, "credentials")
     # return an array of pandas data frames
     return [occupation_table, industry_table, education_table, credential_holder_table]
 
 
 def generate_table(census_api, state, county, codes, data_name, year=2019):
-    # How long data can remain in cache before refresh
-    # stored in days.
-    cache_time = 182
-
     if os.path.isdir(Path('../data/')):
         data_path = os.path.join('../data/census_data/', str(year),
                                  state, county, data_name)
@@ -220,13 +221,65 @@ def append_in_list(list, suffix):
     return [x + suffix for x in list]
 
 
-def credential_holder(census_api, state, county, codes):
-    # Start year of the Census ACS5
-    year = 2009
+def credential_holder(census_api, state, county, codes, data_name):
+    current_year = date.today().year
     df_array = []
-    # Create a pandas DF for each year of the ACS5 starting from 2009 - 2019
-    while year <= 2019:
-        credentials = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county, year=year)
+
+    for year in range(current_year-4, current_year-1):
+        if os.path.isdir(Path('../data/')):
+            data_path = os.path.join('../data/census_data/', str(year),
+                                     state, county, data_name)
+        elif os.path.isdir('data/'):
+            data_path = os.path.join('data/census_data/', str(year),
+                                     state, county, data_name)
+        else:
+            raise FileNotFoundError("Data path is not found")
+
+        data_path = Path(data_path)
+
+        # Ensure that data path exists, if it doesn't already
+        os.makedirs(data_path, exist_ok=True)
+
+        # Ensures that cached data is not older than 1 day
+        # If timestamp is found, it will read in the date listed.
+        # If the date was over 24 hours ago, the files are deleted so they can
+        # be re-queried in the next step.
+        time_file_path = os.path.join(data_path, 'creds_last_modified.txt')
+        if os.path.isfile(time_file_path):
+            with open(time_file_path) as file:
+                time_str = file.read()
+                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+                time_elapsed = datetime.now() - timestamp
+                # Converts seconds to days
+                time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+                if time_elapsed > cache_time:
+                    os.remove(os.path.join(data_path,'credentials.json'))
+                    os.remove(os.path.join(data_path,'creds_last_modified.txt'))
+
+        # Query the margin of error for the above data
+        credentials_file_path = os.path.join(data_path, 'credentials.json')
+
+        # Checks if file exists in cache
+        if os.path.isfile(credentials_file_path):
+            # Load data from cache
+            credentials = [json.load(open(credentials_file_path))]
+        else:
+            # Query data from the census API
+            credentials = census_api.acs5.state_county(append_in_list(codes, 'E'), state, county, year=year)
+
+            # Write data to cache for later usage
+            json_obj = json.dumps(credentials[0], indent=2)
+            with open(credentials_file_path, "w") as outfile:
+                outfile.write(json_obj)
+            del json_obj
+
+            # Record timestamp of data retrieved for cache expiration
+            time_file_path = os.path.join(data_path,
+                                          'creds_last_modified.txt')
+            with open(time_file_path, "w") as outfile:
+                now_str = datetime.strftime(datetime.now(), '%m/%d/%Y %H:%M:%S')
+                outfile.write(now_str)
+
         df = pandas.DataFrame(credentials)
         df = df.drop(columns=['state', 'county'])
         df = df.rename(columns=lambda code: codes[code[:-1]],
@@ -234,9 +287,25 @@ def credential_holder(census_api, state, county, codes):
                        index={0: year}
                        )
         df_array.append(df)
-        year += 1
+
     pd.set_option('display.max_columns', None)
     df = pd.concat(df_array)
+
+    years = []
+    for year in range(current_year-1, current_year+6):
+        row = []
+        years.append(year)
+        for key, value in credential_holder_map.items():
+            row.append(df.tail(3)[value].mean())
+
+        row = pd.Series(row, df.columns)
+        df = df.append(row, ignore_index=True)
+
+
+    df = df.tail(7)
+    df.index = pd.Series(years)
+    df.rename_axis('Year', axis='columns', inplace=True)
+
     pd.options.display.float_format = '{:,.0f}'.format
     return df
 
