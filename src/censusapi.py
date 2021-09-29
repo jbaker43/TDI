@@ -79,6 +79,25 @@ credential_holder_map = {
 cache_time = 182
 
 
+def cache_expiration(state, county, codes,
+                     data_name, year=date.today().year):
+    if os.path.isdir(Path('../data/')):
+        data_path = os.path.join('../data/census_data/', str(year),
+                         state, county, data_name)
+    elif os.path.isdir('data/'):
+        data_path = os.path.join('data/census_data/', str(year),
+                         state, county, data_name)
+    else:
+        raise FileNotFoundError("Data path is not found")
+
+    data_path = Path(data_path)
+
+    # Ensure that data path exists, if it doesn't already
+    os.makedirs(data_path, exist_ok=True)
+
+    return data_path
+
+
 def census_api_request(state, county):
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
@@ -92,19 +111,7 @@ def census_api_request(state, county):
 
 
 def generate_table(census_api, state, county, codes, data_name, year=2019):
-    if os.path.isdir(Path('../data/')):
-        data_path = os.path.join('../data/census_data/', str(year),
-                                 state, county, data_name)
-    elif os.path.isdir('data/'):
-        data_path = os.path.join('data/census_data/', str(year),
-                                 state, county, data_name)
-    else:
-        raise FileNotFoundError("Data path is not found")
-
-    data_path = Path(data_path)
-
-    # Ensure that data path exists, if it doesn't already
-    os.makedirs(data_path, exist_ok=True)
+    data_path = cache_expiration(state, county, codes, data_name, year)
 
     # Ensures that cached data is not older than 1 day
     # If timestamp is found, it will read in the date listed.
@@ -226,19 +233,7 @@ def credential_holder(census_api, state, county, codes, data_name):
     df_array = []
 
     for year in range(current_year-4, current_year-1):
-        if os.path.isdir(Path('../data/')):
-            data_path = os.path.join('../data/census_data/', str(year),
-                                     state, county, data_name)
-        elif os.path.isdir('data/'):
-            data_path = os.path.join('data/census_data/', str(year),
-                                     state, county, data_name)
-        else:
-            raise FileNotFoundError("Data path is not found")
-
-        data_path = Path(data_path)
-
-        # Ensure that data path exists, if it doesn't already
-        os.makedirs(data_path, exist_ok=True)
+        data_path = cache_expiration(state, county, codes, data_name, year=year)
 
         # Ensures that cached data is not older than 1 day
         # If timestamp is found, it will read in the date listed.
