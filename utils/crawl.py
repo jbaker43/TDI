@@ -5,6 +5,7 @@ import pandas as pd
 from census import Census
 import json
 from datetime import datetime
+from datetime import date
 
 
 industry_map = {
@@ -118,12 +119,17 @@ def get_state_data() -> dict:
     return states
 
 
-def generate_table(census_api, state, county, codes, data_name):
+def generate_table(census_api, state, county, codes, data_name, year=2019):
+    # How long data can remain in cache before refresh
+    # stored in days.
+    cache_time = 182
+
+
     if os.path.isdir(Path('../data/')):
-        data_path = os.path.join('../data/census_data/',
+        data_path = os.path.join('../data/census_data/', str(year),
                                  state, county, data_name)
     elif os.path.isdir('data/'):
-        data_path = os.path.join('data/census_data/',
+        data_path = os.path.join('data/census_data/', str(year),
                                  state, county, data_name)
     else:
         raise FileNotFoundError("Data path is not found")
@@ -143,7 +149,9 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
+            # Converts seconds to days
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
                 os.remove(os.path.join(data_path,'categories.json'))
                 os.remove(os.path.join(data_path,'cat_last_modified.txt'))
 
@@ -158,7 +166,9 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
+            # Converts seconds to days
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
                 os.remove(os.path.join(data_path,'margin_of_error.json'))
                 os.remove(os.path.join(data_path,'margin_last_modified.txt'))
 
@@ -217,25 +227,29 @@ def generate_table(census_api, state, county, codes, data_name):
             outfile.write(now_str)
 
 
-def census_api_request(state, county):
+def census_api_request(state, county, year=2019):
     api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
-    c = Census(api_key)
-    occupation_table = generate_table(c, state, county, occupation_map, "occupation")
-    industry_table = generate_table(c, state, county, industry_map, "industry")
-    education_table = generate_table(c, state, county, education_map, "education")
+    c = Census(api_key, year)
+    occupation_table = generate_table(c, state, county, occupation_map, "occupation", year)
+    industry_table = generate_table(c, state, county, industry_map, "industry", year)
+    education_table = generate_table(c, state, county, education_map, "education", year)
 
     # return an array of pandas data frames
     return [occupation_table, industry_table, education_table]
 
 
 if __name__ == "__main__":
+    current_year = date.today().year
     states = get_state_data()
-    for state_key, state_value in states.items():
-        for county_key, county_value in state_value['counties'].items():
-            print("Caching " + county_key + ", " + state_key)
-            try:
-                census_api_request(state_value['fips'], county_value)
-            except:
-                print("Caching failed for " + county_key + ", " + state_key)
+
+    for year in range(current_year-4, current_year-1):
+        for state_key, state_value in states.items():
+            for county_key, county_value in state_value['counties'].items():
+                print(str(year) + " | Caching " + county_key + ", " + state_key)
+                census_api_request(state_value['fips'], county_value, year)
+                try:
+                    census_api_request(state_value['fips'], county_value, year)
+                except:
+                    print("Caching failed for " + county_key + ", " + state_key)
 

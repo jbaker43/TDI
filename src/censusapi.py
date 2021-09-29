@@ -86,12 +86,16 @@ def census_api_request(state, county):
     return [occupation_table, industry_table, education_table, credential_holder_table]
 
 
-def generate_table(census_api, state, county, codes, data_name):
+def generate_table(census_api, state, county, codes, data_name, year=2019):
+    # How long data can remain in cache before refresh
+    # stored in days.
+    cache_time = 182
+
     if os.path.isdir(Path('../data/')):
-        data_path = os.path.join('../data/census_data/',
+        data_path = os.path.join('../data/census_data/', str(year),
                                  state, county, data_name)
     elif os.path.isdir('data/'):
-        data_path = os.path.join('data/census_data/',
+        data_path = os.path.join('data/census_data/', str(year),
                                  state, county, data_name)
     else:
         raise FileNotFoundError("Data path is not found")
@@ -111,9 +115,11 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
-                os.remove(os.path.join(data_path, 'categories.json'))
-                os.remove(os.path.join(data_path, 'cat_last_modified.txt'))
+            # Converts seconds to days
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
+                os.remove(os.path.join(data_path,'categories.json'))
+                os.remove(os.path.join(data_path,'cat_last_modified.txt'))
 
     # Ensures that cached data is not older than 1 day
     # If timestamp is found, it will read in the date listed.
@@ -125,9 +131,10 @@ def generate_table(census_api, state, county, codes, data_name):
             time_str = file.read()
             timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
             time_elapsed = datetime.now() - timestamp
-            if time_elapsed.total_seconds() > 86400:
-                os.remove(os.path.join(data_path, 'margin_of_error.json'))
-                os.remove(os.path.join(data_path, 'margin_last_modified.txt'))
+            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+            if time_elapsed > cache_time:
+                os.remove(os.path.join(data_path,'margin_of_error.json'))
+                os.remove(os.path.join(data_path,'margin_last_modified.txt'))
 
     # Using the Census wrapper to query the Census API and get occupation data. The state is TN  (states.TN.fips returns
     # 47, the number the census uses to represent the state of TN), and the county is Hamilton County (065).
