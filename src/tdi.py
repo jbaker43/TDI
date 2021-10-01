@@ -7,7 +7,7 @@ import censusapi
 from flask import render_template, redirect, url_for, request
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import SelectField, FieldList, StringField
+from wtforms import SelectField, FieldList, StringField, HiddenField
 
 SECRET_KEY = os.urandom(32)
 
@@ -74,7 +74,6 @@ def get_county_name_full(county_code):
     for state in states.keys():
         for key, value in states[state]['counties'].items():
             if int(value) == int(county_code):
-                print(key)
                 return key
     return 'county not found'
 
@@ -122,7 +121,7 @@ class State_Form(FlaskForm):
     county.choices = []
 
     selected_counties = FieldList(StringField('County', render_kw={'readonly': True}), [])
-
+    codes = HiddenField('codes')
 
 class County_Form(State_Form):
     county = SelectField('County', validate_choice=False)
@@ -134,22 +133,35 @@ class Table_Form(FlaskForm):
 
 @app.route("/", methods=["GET", "POST"])
 def query():
-    form = State_Form()
-
+    if flask.request.args and flask.request.args['fips']:
+        form = State_Form(codes=flask.request.args['fips'])
+    else:
+        form = State_Form()
     if flask.request.method == 'POST':
-        for item in flask.request.form.items():
-            if 'state' in item:
-                field, state = item
-        return redirect(url_for('county_query', state=state))
-
-    if flask.request.method == 'GET':
+        if flask.request.form.get('submit'):
+            state = flask.request.form.get('state')
+            if state:
+                return redirect(url_for('county_query', state=state))
+        elif flask.request.form.get('add_county'):
+            selected_county = flask.request.form.get('county')
+            fips = ''
+            if flask.request.form.get('codes'):
+                fips = flask.request.form.get('codes') + '|'
+            fips += selected_county
+            return redirect(url_for('query', fips=fips))
+        else:
+            print('Unsupported form action')
+    elif flask.request.method == 'GET':
         if request.args and request.args['fips']:
             fill_with_fips(form, request.args['fips'])
+            print(request.args['fips'])
+    else:
+        print('Unsupported HTTP request method: ' + flask.request.method)
 
     return render_template('state.html', form=form)
 
 def fill_with_fips(form, fips):
-    counties = fips.split(',')
+    counties = fips.split('|')
     for county in counties:
         form.selected_counties.append_entry(get_county_name_full(county))
 
