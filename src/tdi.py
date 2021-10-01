@@ -4,10 +4,10 @@ import flask
 import us
 import pandas
 import censusapi
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, request
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import SelectField
+from wtforms import SelectField, FieldList, StringField
 
 SECRET_KEY = os.urandom(32)
 
@@ -69,6 +69,14 @@ def get_state_data() -> dict:
 
     return states
 
+def get_county_name_full(county_code):
+    states = get_state_data()
+    for state in states.keys():
+        for key, value in states[state]['counties'].items():
+            if int(value) == int(county_code):
+                print(key)
+                return key
+    return 'county not found'
 
 def get_county_name(state, county_code):
     states = get_state_data()
@@ -111,9 +119,9 @@ class State_Form(FlaskForm):
     county_choices = [(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()] 
     state = SelectField('State', choices=state_choices, id='state_select') 
     county = SelectField('County', choices=county_choices, id='county_select')
+    county.choices = []
 
-    state.choices = state_choices
-    county.choices = county_choices 
+    selected_counties = FieldList(StringField('County', render_kw={'readonly': True}), [])
 
 
 class County_Form(State_Form):
@@ -125,7 +133,7 @@ class Table_Form(FlaskForm):
 
 
 @app.route("/", methods=["GET", "POST"])
-def state_query():
+def query():
     form = State_Form()
 
     if flask.request.method == 'POST':
@@ -134,8 +142,16 @@ def state_query():
                 field, state = item
         return redirect(url_for('county_query', state=state))
 
+    if flask.request.method == 'GET':
+        if request.args and request.args['fips']:
+            fill_with_fips(form, request.args['fips'])
+
     return render_template('state.html', form=form)
 
+def fill_with_fips(form, fips):
+    counties = fips.split(',')
+    for county in counties:
+        form.selected_counties.append_entry(get_county_name_full(county))
 
 @app.route('/query/<state>/', methods=["GET", "POST"])
 def county_query(state):
