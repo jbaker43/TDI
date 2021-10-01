@@ -107,10 +107,16 @@ def get_county_choices(state: str) -> tuple:
 
 
 class State_Form(FlaskForm):
-    state = SelectField('State', choices=get_state_choices())
+    state_choices = get_state_choices()
+    county_choices = [(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()] 
+    state = SelectField('State', choices=state_choices, id='state_select') 
+    county = SelectField('County', choices=county_choices, id='county_select')
+
+    state.choices = state_choices
+    county.choices = county_choices 
 
 
-class County_Form(FlaskForm):
+class County_Form(State_Form):
     county = SelectField('County', validate_choice=False)
 
 
@@ -168,6 +174,20 @@ def table_query(state, county_code):
     industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
     edu = df[2].to_html(classes='table table-hover table-dark', justify='start')
     return render_template('table.html',  tables=[occupation, industry, edu], title=table_title)
+
+#@app.route('/county_list')
+#def county_list():
+#    counties = [(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()] 
+#    return counties
+
+@app.route('/county_list/<state>')
+def county_list(state):
+    if state == "all":
+        counties = dict([(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()])
+    else:
+        counties = dict([(value, key) for (key, value) in states_data[state]['counties'].items()])
+    return counties
+
 
 
 if __name__ == "__main__":
