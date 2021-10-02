@@ -180,6 +180,7 @@ def table_query(fips_url):
     for code in fips:
         titles.append(get_county_name(code))
     table_title = 'Data for ' + ', '.join(titles)
+    total = [] # For recalculating percentage
 
     for code in fips:
         print(code)
@@ -192,17 +193,23 @@ def table_query(fips_url):
         state_name = s.name
         county_name = get_county_name(code) 
 
-        try:
-            df = censusapi.census_api_request(state_fip, county)
-            if table_sums:
-                for i in range(len(table_sums)):
-                    table_sums[i]['Estimate'] += df[i]['Estimate']
-                    table_sums[i]['Margin_of_Error'] += df[i]['Margin_of_Error']
-                    table_sums[i]['Percent'] += df[i]['Percent']
+        df = censusapi.census_api_request(state_fip, county)
+        if table_sums:
+            for i in range(len(table_sums)):
+                table_sums[i]['Estimate'] += df[i]['Estimate']
+                table_sums[i]['Margin_of_Error'] += df[i]['Margin_of_Error']
+                total[i] += df[i]['Estimate'][-1]
+        else:
+            for i in range(len(df)):
+                df[i]['Percent'].multiply(df[i]['Estimate'][-1] / 100)
+                total.append(df[i]['Estimate'][-1])
             else:
                 table_sums = df
-        except:
-            return render_template('error.html', title=table_title)
+
+    # Recalculate percentage
+    print('total', total)
+    for i in range(len(table_sums)):
+        table_sums[i]['Percent'].multiply(total[i] / 100)
 
     # Formatting the columns was moved from censusapi.py to here, because you
     # can't add symbols. This should probably still move further forward
