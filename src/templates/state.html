@@ -45,20 +45,23 @@
 
 		function state_select_change() {
 				xhr = new XMLHttpRequest();
-				xhr.open("GET", "/county_list/" + state_select.options[state_select.selectedIndex].text, false);
+				xhr.open("GET", "/county_list/" + state_select.options[state_select.selectedIndex].value, false);
 				xhr.send(null); 
 				while (county_select.lastChild) {
 						county_select.removeChild(county_select.lastChild);
 				}
 				console.log(xhr.responseText);
 				var choices = JSON.parse(xhr.responseText);
-				choices = Object.values(choices);
-				choices.sort();
-				console.log(choices);
-				for (key in choices) {
+				choices_arr = Object.keys(choices).map(function(key) {
+						return [key, choices[key]];
+				});
+				choices_arr.sort(function(o1, o2) {
+						return o1 > o2 ? 1 : o1 < o2 ? -1 : 0;
+				});
+				for (let i = 0; i < choices_arr.length; i++) {
 						var node = document.createElement("option");
-						node.value = key;
-						node.text = choices[key];
+						node.value = choices_arr[i][0];
+						node.text = choices_arr[i][1];
 						county_select.appendChild(node);
 				}
 		}

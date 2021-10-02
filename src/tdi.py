@@ -18,15 +18,19 @@ app.config['SECRET_KEY'] = SECRET_KEY
 states_data = None
 
 
-def get_state_data() -> dict:
+def get_state_data(reload=False) -> dict:
     """
     This function creates a dictionary of information about
     a state.
     Specifically, this collects a states FIPS code, abbreviation,
     and all its counties.
+    If reload, then data will re-read from system.
 
     Returns: dictionary
     """
+
+    if states_data and not reload:
+        return
 
     # Will stores information about state
     states = dict()
@@ -55,33 +59,35 @@ def get_state_data() -> dict:
         df = counties_df[counties_df['USPS'].apply(
             lambda x: x.startswith(abbr))]
 
-        # Removes leading digits from GEOID as this is needed for census query
         for index, row in df.iterrows():
-            counties[row['NAME']] = row['GEOID'][-3:]
+            counties[row['GEOID'].zfill(5)] = {
+                "state": state,
+                "name": row['NAME']
+            }
 
-        # Stores information about a state
-        # (which includes nested dictionary of counties)
-        states[str(state)] = {
+
+        states[state.fips] = {
             "abbr": abbr,
-            "fips": fips,
-            "counties": counties
+            "name": state.name,
+            "counties": counties,
+            "enum": state
         }
 
     return states
 
-def get_county_name_full(county_code):
-    states = get_state_data()
-    for state in states.keys():
-        for key, value in states[state]['counties'].items():
-            if int(value) == int(county_code):
-                return key
-    return 'county not found'
+def get_county_name(county):
+    state = county[0:2]
+    return states_data[state]['counties'][county]['name']
 
-def get_county_name(state, county_code):
-    states = get_state_data()
-    for key, value in states[state]['counties'].items():
-        if value == county_code:
-            return key
+def get_county_name_full(county):
+    state = county[0:2]
+    return get_county_name(county) + ", " + states_data[state]['name']
+
+def to_fips(state):
+    return us.states.lookup(state).fips
+
+def get_state_name(state):
+    return us.states.lookup(state).name
 
 
 def get_state_choices() -> tuple:
@@ -96,9 +102,8 @@ def get_state_choices() -> tuple:
         states_data = get_state_data()
     choices = []
     for key, value in states_data.items():
-        choices.append((key, key))
+        choices.append((key, get_state_name(key)))
     return choices
-
 
 def get_county_choices(state: str) -> tuple:
     """
@@ -109,27 +114,20 @@ def get_county_choices(state: str) -> tuple:
     """
     choices = []
     for key, value in states_data[state]['counties'].items():
-        choices.append((value, key))
+        choices.append((key, value['name'] + ", " + value['state'].name))
     return choices
-
 
 class State_Form(FlaskForm):
     state_choices = get_state_choices()
-    county_choices = [(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()] 
-    state = SelectField('State', choices=state_choices, id='state_select') 
+    county_choices = [county for state in states_data for county in get_county_choices(state)]
+    state = SelectField('State', choices=state_choices, id='state_select')
     county = SelectField('County', choices=county_choices, id='county_select')
-    county.choices = []
 
     selected_counties = FieldList(StringField('County', render_kw={'readonly': True}), [])
     codes = HiddenField('codes')
 
-class County_Form(State_Form):
-    county = SelectField('County', validate_choice=False)
-
-
 class Table_Form(FlaskForm):
     table = SelectField('Table', validate_choice=False)
-
 
 @app.route("/", methods=["GET", "POST"])
 def query():
@@ -137,86 +135,95 @@ def query():
         form = State_Form(codes=flask.request.args['fips'])
     else:
         form = State_Form()
+
     if flask.request.method == 'POST':
+        county = flask.request.form.get('county')
+        state = flask.request.form.get('state')
+        codes = flask.request.form.get('codes')
+        if not county or not state: return
+        fips = ''
+        if codes:
+            fips = codes + '|'
+        fips += county
+
         if flask.request.form.get('submit'):
-            state = flask.request.form.get('state')
-            if state:
-                return redirect(url_for('county_query', state=state))
+            return redirect(url_for('table_query', fips_url=fips))
         elif flask.request.form.get('add_county'):
-            selected_county = flask.request.form.get('county')
-            fips = ''
-            if flask.request.form.get('codes'):
-                fips = flask.request.form.get('codes') + '|'
-            fips += selected_county
             return redirect(url_for('query', fips=fips))
         else:
-            print('Unsupported form action')
+            raise Exception('Unsupported form action')
+
     elif flask.request.method == 'GET':
         if request.args and request.args['fips']:
-            fill_with_fips(form, request.args['fips'])
-            print(request.args['fips'])
+            fill_selected_counties(form, request.args['fips'])
     else:
-        print('Unsupported HTTP request method: ' + flask.request.method)
+        raise Exception('Unsupported HTTP request method: ' + flask.request.method)
 
     return render_template('state.html', form=form)
 
-def fill_with_fips(form, fips):
+def fill_selected_counties(form, fips):
     counties = fips.split('|')
     for county in counties:
+        print(county)
         form.selected_counties.append_entry(get_county_name_full(county))
 
-@app.route('/query/<state>/', methods=["GET", "POST"])
-def county_query(state):
-    form = County_Form()
-    form.county.choices = get_county_choices(state)
-
-    if flask.request.method == 'POST':
-        for item in flask.request.form.items():
-            if 'county' in item:
-                field, code = item
-        return redirect(url_for('table_query',
-                                state=state,
-                                county_code=code))
-
-    return render_template('county.html', form=form)
-
-
-@app.route('/query/<state>/<county_code>', methods=["GET", "POST"])
-def table_query(state, county_code):
+@app.route('/query/<fips_url>', methods=["GET", "POST"])
+def table_query(fips_url):
     """
     This route takes a selected state and county
     and allows a user to choose a table to view
     """
-    # Lookup state and get fips code
-    s = us.states.lookup(state)
-    state_fip = s.fips
-    state_name = s.name
-    county_name = get_county_name(state, county_code)
-    table_title = "Data for " + county_name + ', ' + state_name
-    try:
-        df = censusapi.census_api_request(state_fip, county_code)
-    except:
-        return render_template('error.html', title=table_title)
-    # Turning the pandas dataframes to html to display
-    occupation = df[0].to_html(classes='table table-hover table-dark', justify='start')
-    industry = df[1].to_html(classes='table table-hover table-dark', justify='start')
-    edu = df[2].to_html(classes='table table-hover table-dark', justify='start')
-    return render_template('table.html',  tables=[occupation, industry, edu], title=table_title)
 
-#@app.route('/county_list')
-#def county_list():
-#    counties = [(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()] 
-#    return counties
+    fips = fips_url.split('|')
+    table_sums = None
+    titles = []
+    for code in fips:
+        titles.append(get_county_name(code))
+    table_title = 'Data for ' + ', '.join(titles)
+
+    for code in fips:
+        print(code)
+
+        # Lookup state and get fips code
+        state = code[0:2]
+        county = code[2:]
+        s = us.states.lookup(state)
+        state_fip = s.fips
+        state_name = s.name
+        county_name = get_county_name(code) 
+
+        try:
+            df = censusapi.census_api_request(state_fip, county)
+            if table_sums:
+                for i in range(len(table_sums)):
+                    table_sums[i]['Estimate'] += df[i]['Estimate']
+                    table_sums[i]['Margin_of_Error'] += df[i]['Margin_of_Error']
+                    table_sums[i]['Percent'] += df[i]['Percent']
+            else:
+                table_sums = df
+        except:
+            return render_template('error.html', title=table_title)
+
+    # Formatting the columns was moved from censusapi.py to here, because you
+    # can't add symbols. This should probably still move further forward
+    for table in table_sums:
+        table['Estimate'] = table['Estimate'].map(int).map('{:d}'.format)
+        table['Margin_of_Error'] = table['Margin_of_Error'].map(int).map('±{:d}'.format)
+        table['Percent'] = table['Percent'].map('{:.2f}%'.format)
+
+    # Turning the pandas dataframes to html to display
+    for i in range(len(table_sums)):
+        table_sums[i] = table_sums[i].to_html(classes='table table-hover table-dark', justify='start')
+
+    return render_template('table.html', tables=table_sums, title=table_title)
 
 @app.route('/county_list/<state>')
 def county_list(state):
     if state == "all":
-        counties = dict([(value, key) for state in states_data for (key, value) in states_data[state]['counties'].items()])
+        counties = dict([item for state in states_data for item in states_data[state]['counties'].items()])
     else:
-        counties = dict([(value, key) for (key, value) in states_data[state]['counties'].items()])
+        counties = dict([(key, value['name']) for (key, value) in states_data[state]['counties'].items()])
     return counties
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)
