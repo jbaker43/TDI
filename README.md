@@ -1,4 +1,4 @@
-# Talent Dividend Initiative
+# Talent Development Initiative
 
 ## Dependencies
 To install the required dependencies, run the following line from within the project directory:
