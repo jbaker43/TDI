@@ -95,6 +95,58 @@ def cache_expiration(state, county, codes,
     # Ensure that data path exists, if it doesn't already
     os.makedirs(data_path, exist_ok=True)
 
+    names = ['occupation', 'industry', 'education']
+
+    if data_name in names:
+        # Ensures that cached data is not older than 6 months
+        # If timestamp is found, it will read in the date listed.
+        # If the date was over 24 hours ago, the files are deleted so they can
+        # be re-queried in the next step.
+        time_file_path = os.path.join(data_path, 'cat_last_modified.txt')
+        if os.path.isfile(time_file_path):
+            with open(time_file_path) as file:
+                time_str = file.read()
+                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+                time_elapsed = datetime.now() - timestamp
+                # Converts seconds to days
+                time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+                if time_elapsed > cache_time:
+                    os.remove(os.path.join(data_path,'categories.json'))
+                    os.remove(os.path.join(data_path,'cat_last_modified.txt'))
+
+        # Ensures that cached data is not older than 1 day
+        # If timestamp is found, it will read in the date listed.
+        # If the date was over 24 hours ago, the files are deleted so they can
+        # be re-queried in the next step.
+        time_file_path = os.path.join(data_path, 'margin_last_modified.txt')
+        if os.path.isfile(time_file_path):
+            with open(time_file_path) as file:
+                time_str = file.read()
+                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+                time_elapsed = datetime.now() - timestamp
+                time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+                if time_elapsed > cache_time:
+                    os.remove(os.path.join(data_path,'margin_of_error.json'))
+                    os.remove(os.path.join(data_path,'margin_last_modified.txt'))
+
+    elif data_name == "credentials":
+        # Ensures that cached data is not older than 1 day
+        # If timestamp is found, it will read in the date listed.
+        # If the date was over 24 hours ago, the files are deleted so they can
+        # be re-queried in the next step.
+        time_file_path = os.path.join(data_path, 'creds_last_modified.txt')
+        if os.path.isfile(time_file_path):
+            with open(time_file_path) as file:
+                time_str = file.read()
+                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+                time_elapsed = datetime.now() - timestamp
+                # Converts seconds to days
+                time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
+                if time_elapsed > cache_time:
+                    os.remove(os.path.join(data_path,'credentials.json'))
+                    os.remove(os.path.join(data_path,'creds_last_modified.txt'))
+
+
     return data_path
 
 
@@ -112,37 +164,6 @@ def census_api_request(state, county):
 
 def generate_table(census_api, state, county, codes, data_name, year=2019):
     data_path = cache_expiration(state, county, codes, data_name, year)
-
-    # Ensures that cached data is not older than 1 day
-    # If timestamp is found, it will read in the date listed.
-    # If the date was over 24 hours ago, the files are deleted so they can
-    # be re-queried in the next step.
-    time_file_path = os.path.join(data_path, 'cat_last_modified.txt')
-    if os.path.isfile(time_file_path):
-        with open(time_file_path) as file:
-            time_str = file.read()
-            timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
-            time_elapsed = datetime.now() - timestamp
-            # Converts seconds to days
-            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
-            if time_elapsed > cache_time:
-                os.remove(os.path.join(data_path,'categories.json'))
-                os.remove(os.path.join(data_path,'cat_last_modified.txt'))
-
-    # Ensures that cached data is not older than 1 day
-    # If timestamp is found, it will read in the date listed.
-    # If the date was over 24 hours ago, the files are deleted so they can
-    # be re-queried in the next step.
-    time_file_path = os.path.join(data_path, 'margin_last_modified.txt')
-    if os.path.isfile(time_file_path):
-        with open(time_file_path) as file:
-            time_str = file.read()
-            timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
-            time_elapsed = datetime.now() - timestamp
-            time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
-            if time_elapsed > cache_time:
-                os.remove(os.path.join(data_path,'margin_of_error.json'))
-                os.remove(os.path.join(data_path,'margin_last_modified.txt'))
 
     # Using the Census wrapper to query the Census API and get occupation data. The state is TN  (states.TN.fips returns
     # 47, the number the census uses to represent the state of TN), and the county is Hamilton County (065).
@@ -231,25 +252,10 @@ def append_in_list(list, suffix):
 def credential_holder(census_api, state, county, codes, data_name):
     current_year = date.today().year
     df_array = []
+    years = []
 
     for year in range(current_year-4, current_year-1):
         data_path = cache_expiration(state, county, codes, data_name, year=year)
-
-        # Ensures that cached data is not older than 1 day
-        # If timestamp is found, it will read in the date listed.
-        # If the date was over 24 hours ago, the files are deleted so they can
-        # be re-queried in the next step.
-        time_file_path = os.path.join(data_path, 'creds_last_modified.txt')
-        if os.path.isfile(time_file_path):
-            with open(time_file_path) as file:
-                time_str = file.read()
-                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
-                time_elapsed = datetime.now() - timestamp
-                # Converts seconds to days
-                time_elapsed = time_elapsed.total_seconds()/(60 * 60 * 24)
-                if time_elapsed > cache_time:
-                    os.remove(os.path.join(data_path,'credentials.json'))
-                    os.remove(os.path.join(data_path,'creds_last_modified.txt'))
 
         # Query the margin of error for the above data
         credentials_file_path = os.path.join(data_path, 'credentials.json')
@@ -282,11 +288,11 @@ def credential_holder(census_api, state, county, codes, data_name):
                        index={0: year}
                        )
         df_array.append(df)
+        years.append(year)
 
     pd.set_option('display.max_columns', None)
     df = pd.concat(df_array)
 
-    years = []
     for year in range(current_year-1, current_year+6):
         row = []
         years.append(year)
@@ -297,9 +303,10 @@ def credential_holder(census_api, state, county, codes, data_name):
         df = df.append(row, ignore_index=True)
 
 
-    df = df.tail(7)
     df.index = pd.Series(years)
     df.rename_axis('Year', axis='columns', inplace=True)
+
+    df = df.tail(7)
 
     pd.options.display.float_format = '{:,.0f}'.format
     return df
