@@ -89,6 +89,14 @@ def to_fips(state):
 def get_state_name(state):
     return us.states.lookup(state).name
 
+def add_code(code_base, new_code):
+    if new_code in code_base.split('|'):
+        return code_base
+    code = code_base
+    if code_base:
+        code += '|'
+    code += new_code
+    return code
 
 def get_state_choices() -> tuple:
     """
@@ -145,9 +153,7 @@ def query():
         if flask.request.form.get('submit'):
             return redirect(url_for('table_query', fips_url=fips))
         elif flask.request.form.get('add_county'):
-            if fips:
-                fips = fips + '|'
-            fips += county
+            fips = add_code(fips, county)
             return redirect(url_for('query', fips=fips))
         else:
             raise Exception('Unsupported form action')
