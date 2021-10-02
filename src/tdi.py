@@ -139,16 +139,15 @@ def query():
     if flask.request.method == 'POST':
         county = flask.request.form.get('county')
         state = flask.request.form.get('state')
-        codes = flask.request.form.get('codes')
+        fips = flask.request.form.get('codes')
         if not county or not state: return
-        fips = ''
-        if codes:
-            fips = codes + '|'
-        fips += county
 
         if flask.request.form.get('submit'):
             return redirect(url_for('table_query', fips_url=fips))
         elif flask.request.form.get('add_county'):
+            if fips:
+                fips = fips + '|'
+            fips += county
             return redirect(url_for('query', fips=fips))
         else:
             raise Exception('Unsupported form action')
