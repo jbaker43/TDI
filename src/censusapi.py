@@ -233,12 +233,6 @@ def generate_table(census_api, state, county, codes, data_name, year=2019):
                    )
     # Add column for labor percentages
     df = df.assign(Percent=df['Estimate'] * 100 / df['Estimate'][1:].sum())
-    # Rounding the percent column to the hundredths place
-    df['Percent'] = df['Percent'].astype(float).round(2)
-    # This adds the percent sign but be careful because it casts as a string type
-    df['Percent'] = df['Percent'].astype(str) + '%'
-    # This adds +/- sign but same as above, be careful as it casts as a string type
-    df['Margin_of_Error'] = '+/- ' + df['Margin_of_Error'].astype(str)
     pd.set_option('display.max_columns', None)
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')
