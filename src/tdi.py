@@ -188,21 +188,21 @@ def table_query(fips_url):
     for code in codes:
         titles.append(get_county_name(code))
     table_title = 'Data for ' + ', '.join(titles)
-    totals = []  #  For recalculating percentages
+    totals = []  # For recalculating percentages
 
     for code in codes:
         print(code)
 
-        #  Lookup state and get fips code
+        # Lookup state and get fips code
         state_code = code[0:2]
         county_code = code[2:]
         skip_adding = ['Year']
 
         df = censusapi.census_api_request(state_code, county_code)
         if not totals:
-            totals = [0] * len(df) # Up to one total for each table
+            totals = [0] * len(df)  # Up to one total for each table
 
-        #  We are assuming that any table with 'Percent' also has 'Estimate'
+        # We are assuming that any table with 'Percent' also has 'Estimate'
         for i in range(len(df)):
             if 'Percent' in df[i].columns:
                 df[i]['Percent'] *= df[i]['Estimate'][-1]
@@ -221,7 +221,8 @@ def table_query(fips_url):
     for i in range(len(table_sums)):
         if 'Percent' in table_sums[i].columns:
             norm_factor = totals[i]
-            table_sums[i]['Percent'] = table_sums[i]['Percent'].divide(norm_factor)
+            table_sums[i]['Percent'] = table_sums[i]['Percent'] \
+                .divide(norm_factor)
 
     # Formatting the columns was moved from censusapi.py to here, because you
     # can't add symbols. This should probably still move further forward
@@ -229,7 +230,8 @@ def table_query(fips_url):
     format_percent = lambda x: '{:.2f}%'.format(x)
     for table in table_sums:
         if 'Margin_of_Error' in table:
-            table['Margin_of_Error'] = table['Margin_of_Error'].map(format_margin)
+            table['Margin_of_Error'] = table['Margin_of_Error'] \
+                .map(format_margin)
         if 'Percent' in table:
             table['Percent'] = table['Percent'].map(format_percent)
 
