@@ -164,7 +164,7 @@ def query():
     else:
         raise Exception('Unsupported HTTP request method: ' + flask.request.method)
 
-    return render_template('state.html', form=form)
+    return render_template('state.html', form=form, states=states_data)
 
 def fill_selected_counties(form, fips):
     counties = fips.split('|')
