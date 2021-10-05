@@ -102,6 +102,20 @@ def add_code(code_base, new_code):
     return code
 
 
+def remove_code(code_base, old_code):
+    codes = code_base.split('|')
+    if old_code in codes:
+        codes.remove(old_code)
+    return '|'.join(codes)
+
+
+def get_remove_action(request):
+    for key in request.form:
+        if key.startswith('remove_'):
+            return key
+    return None
+
+
 def get_state_choices() -> tuple:
     """
     Get (fips, state) tuple for each state
@@ -151,6 +165,7 @@ def query():
     if flask.request.method == 'POST':
         county = flask.request.form.get('county')
         state = flask.request.form.get('state')
+        to_remove = get_remove_action(flask.request)
         if not county or not state:
             return
         fips = ''
@@ -161,6 +176,12 @@ def query():
         elif flask.request.form.get('add_county'):
             fips = add_code(fips, county)
             return redirect(url_for('query', fips=fips))
+        elif to_remove:
+            fips = remove_code(fips, to_remove[-5:])
+            if fips:
+                return redirect(url_for('query', fips=fips))
+            else:
+                return redirect(url_for('query'))
         else:
             raise Exception('Unsupported form action')
 
