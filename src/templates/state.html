@@ -36,7 +36,10 @@
             <h5 class="m-4">Currently Selected Counties</h5>
 			<ul class="list-group">
 			{% for county in counties %}
-			    <li class="list-group-item">{{ states[county[0:2]]["counties"][county]["name"] }}</li>
+			    <li class="list-group-item">
+					<input type="submit" class="btn btn-danger" name={{ "remove_" + county }} value="Remove">
+				    {{ states[county[0:2]]["counties"][county]["name"] }}
+				</li>
 			{% endfor %}
 			</ul>
             <div class="d-grid col-6 mx-auto p-4">
