@@ -7,7 +7,7 @@ import censusapi
 from flask import render_template, redirect, url_for
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import SelectField, HiddenField
+from wtforms import SelectField
 
 SECRET_KEY = os.urandom(32)
 
@@ -138,7 +138,6 @@ class State_Form(FlaskForm):
                       for county in get_county_choices(state)]
     state = SelectField('State', choices=state_choices, id='state_select')
     county = SelectField('County', choices=county_choices, id='county_select')
-    codes = HiddenField('codes')
 
 
 class Table_Form(FlaskForm):
@@ -147,18 +146,16 @@ class Table_Form(FlaskForm):
 
 @app.route("/", methods=["GET", "POST"])
 def query():
-    if flask.request.args and flask.request.args['fips']:
-        form = State_Form(codes=flask.request.args['fips'])
-    else:
-        form = State_Form()
+    form = State_Form()
 
     if flask.request.method == 'POST':
         county = flask.request.form.get('county')
         state = flask.request.form.get('state')
-        fips = flask.request.form.get('codes')
         if not county or not state:
             return
-
+        fips = ''
+        if flask.request.args and 'fips' in flask.request.args:
+            fips = flask.request.args['fips']
         if flask.request.form.get('submit'):
             return redirect(url_for('table_query', fips_url=fips))
         elif flask.request.form.get('add_county'):
