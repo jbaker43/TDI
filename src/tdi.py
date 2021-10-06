@@ -22,8 +22,14 @@ def get_state_data(reload=False) -> dict:
     """
     This function creates a dictionary of information about
     a state.
-    Specifically, this collects a states FIPS code, abbreviation,
-    and all its counties.
+
+    A state is represented by a 2-digit FIPS code. This maps to it's name,
+    postal abbreviation, list of counties, and the object representing the
+    state in the us package.
+    Each county is a 5-digit FIPS code which is a combination of it's two-digit
+    state FIPS code and it's additional 3 digits. Counties map to it's us
+    package object and it's name
+    
     If reload, then data will re-read from system.
 
     Returns: dictionary
@@ -75,24 +81,40 @@ def get_state_data(reload=False) -> dict:
 
 
 def get_county_name(county):
+    """
+    Maps a 5-digit FIPS code to the county's name
+    """
     state = county[0:2]
     return states_data[state]['counties'][county]['name']
 
 
 def get_county_name_full(county):
+    """
+    Maps a 5-digit FIPS code to it's name followed by the state's name
+    """
     state = county[0:2]
     return get_county_name(county) + ", " + states_data[state]['name']
 
 
 def to_fips(state):
+    """
+    Returns the 2-digit FIPS code for a state
+    """
     return us.states.lookup(state).fips
 
 
 def get_state_name(state):
+    """
+    Maps a 2-digit FIPS code to the state's name
+    """
     return us.states.lookup(state).name
 
 
 def add_code(code_base, new_code):
+    """
+    Takes a pipe-delimited string of FIPS codes and appends another to the end
+    if it isn't already there
+    """
     if new_code in code_base.split('|'):
         return code_base
     code = code_base
@@ -103,6 +125,10 @@ def add_code(code_base, new_code):
 
 
 def remove_code(code_base, old_code):
+    """
+    Take a pipe-delimited string of FIPS codes and removes the given one if
+    it's already there
+    """
     codes = code_base.split('|')
     if old_code in codes:
         codes.remove(old_code)
@@ -110,6 +136,10 @@ def remove_code(code_base, old_code):
 
 
 def get_remove_action(request):
+    """
+    Returns the name of the button that was pressed if that button corresponds
+    to removal of a county
+    """
     for key in request.form:
         if key.startswith('remove_'):
             return key
@@ -160,6 +190,11 @@ class Table_Form(FlaskForm):
 
 @app.route("/", methods=["GET", "POST"])
 def query():
+    """
+    Displays the state and county select screen.
+    FIPS codes can be provided via the URL parameter fips in the form of
+    a pipe-delimited string. Ex: '/?fips=10001,10002' selects two counties
+    """
     form = State_Form()
 
     if flask.request.method == 'POST':
@@ -263,6 +298,12 @@ def table_query(fips_url):
 
 @app.route('/county_list/<state>')
 def county_list(state):
+    """
+    Returns a list of counties given a state.
+    This is used for generating the county dropdown on the state,county
+    selection screen.
+    """
+    # There _must_ be a better way of doing this
     items = states_data[state]['counties'].items()
     if state == "all":
         counties = dict([county for state in states_data for county in items])
