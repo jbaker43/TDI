@@ -191,6 +191,7 @@ def generate_table(census_api, state, county, codes, data_name, year=2019):
     pd.set_option('display.max_columns', None)
     # Sort the values by their estimate
     df = df.sort_values(by='Estimate')
+    df.rename_axis('Category', axis='columns', inplace=True)
     return df
 
 

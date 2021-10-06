@@ -12,10 +12,10 @@
 </head>
 
 <body>
-    <div class="d-flex justify-content-center align-items-center p-4">
-        <h3 class="fw-bolder">Talent Development Initiative</h3>
+    <div role="banner" class="d-flex justify-content-center align-items-center p-4">
+        <h1 class="fw-bolder">Talent Development Initiative</h1>
     </div>
-    <div class="container p-2 mt-5 pt-5">
+    <div role="main" class="container p-2 mt-5 pt-5">
         <div id="spinner" role="status"></div>
         {%if 'fips' in request.args %}
         <form method="POST" action={{ "/?fips=" + request.args['fips'] }}>
@@ -23,16 +23,16 @@
         <form method="POST" action="/">
         {% endif %}
             {{ form.csrf_token }}
-            <h5 class="m-4">Select a State</h5>
+            <h2 class="m-4">Select a State</h2>
             {{ form.state(class_="form-select") }}
-            <h5 class="m-4">Select a County</h5>
+            <h2 class="m-4">Select a County</h2>
             {{ form.county(class_="form-select") }}
             <div class="d-grid col-6 mx-auto p-4">
               <input class="btn btn-primary btn-lg" type="submit" name="add_county" value="Add County">
             </div>
             {% if request.args and 'fips' in request.args %}
             {% set counties = request.args["fips"].split("|") %}
-            <h5 class="m-4">Currently Selected Counties</h5>
+            <h3 class="m-4">Currently Selected Counties</h3>
             <ul class="list-group">
             {% for county in counties %}
                 <li class="list-group-item">
@@ -70,7 +70,7 @@
         function state_select_change() {
                 xhr = new XMLHttpRequest();
                 xhr.open("GET", "/county_list/" + state_select.options[state_select.selectedIndex].value, false);
-                xhr.send(null); 
+                xhr.send(null);
                 while (county_select.lastChild) {
                         county_select.removeChild(county_select.lastChild);
                 }
