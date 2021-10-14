@@ -15,62 +15,14 @@ def load_map(filename):
             map[row['key']] = row['value']
     return map
 
+industry_map = load_map('../src/static/tables/industry.csv')
+occupation_map = load_map('../src/static/tables/occupation.csv')
+education_map = load_map('../src/static/tables/education.csv')
 credential_holder_map = load_map('../src/static/tables/credential_holder.csv')
 
-industry_map = {
-    'C24050_001': 'Total',
-    'C24050_002': 'Agriculture, forestry, fishing and hunting, and mining',
-    'C24050_003': 'Construction',
-    'C24050_004': 'Manufacturing',
-    'C24050_005': 'Wholesale trade',
-    'C24050_006': 'Retail trade',
-    'C24050_007': 'Transportation and warehousing, and utilities',
-    'C24050_008': 'Information',
-    'C24050_009': 'Finance and insurance, and real estate, and rental and leasing',
-    'C24050_010': 'Professional, scientific, and management, and administrative, and waste '
-                  'management services',
-    'C24050_011': 'Educational services, and health care and social assistance',
-    'C24050_012': 'Arts, entertainment, and recreation, and accommodation and food services',
-    'C24050_013': 'Other services, except public administration',
-    'C24050_014': 'Public administration',
-}
-
-occupation_map = {
-    'C24060_001': 'Total',
-    'C24060_002': 'Management, business, science, and arts occupations',
-    'C24060_003': 'Service occupations',
-    'C24060_004': 'Sales and office occupations',
-    'C24060_005': 'Natural resources, construction, and maintenance occupations',
-    'C24060_006': 'Production, transportation, and material moving occupations',
-}
-education_map = {
-        'B15003_001': 'Total',
-        'B15003_002': 'No Schooling Completed',
-        'B15003_003': 'Nursery School',
-        'B15003_004': 'Kindergarten',
-        'B15003_005': '1st grade',
-        'B15003_006': '2nd grade',
-        'B15003_007': '3rd grade',
-        'B15003_008': '4th grade',
-        'B15003_009': '5th grade',
-        'B15003_010': '6th grade',
-        'B15003_011': '7th grade',
-        'B15003_012': '8th grade',
-        'B15003_013': '9th grade',
-        'B15003_014': '10th grade',
-        'B15003_015': '11th grade',
-        'B15003_016': '12th grade, no diploma',
-        'B15003_017': 'Regular high school diploma',
-        'B15003_018': 'GED or alternative credential',
-        'B15003_019': 'Some college, less than 1 year',
-        'B15003_020': 'Some college, 1 or more years, no degree',
-        'B15003_021': 'Associate\'s degree',
-        'B15003_022': 'Bachelor\'s degree',
-        'B15003_023': 'Master\'s degree',
-        'B15003_024': 'Professional school degree',
-        'B15003_025': 'Doctorate degree',
-}
-
+# How long data can remain in cache before refresh
+# stored in days.
+cache_time = 182
 
 def cache_expiration(state, county, codes, data_name, year=date.today().year):
     if os.path.isdir(Path('../data/')):
@@ -392,6 +344,7 @@ if __name__ == "__main__":
         for state_key, state_value in states.items():
             for county_key, county_value in state_value['counties'].items():
                 print(str(year) + " | Caching " + county_key + ", " + state_key)
+                census_api_request(state_value['fips'], county_value, year)
                 try:
                     census_api_request(state_value['fips'], county_value, year)
                 except:
