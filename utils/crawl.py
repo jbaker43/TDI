@@ -102,15 +102,15 @@ def cache_expiration(state, county, codes, data_name, year=date.today().year):
         # be re-queried in the next step.
         time_file_path = os.path.join(data_path, 'margin_last_modified.txt')
         if os.path.isfile(time_file_path):
-        with open(time_file_path) as file:
-            time_str = file.read()
-            timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
-            time_elapsed = datetime.now() - timestamp
-            time_elapsed = time_elapsed.total_seconds() / (60 * 60 * 24)
-            if time_elapsed > cache_time:
-                os.remove(os.path.join(data_path, 'margin_of_error.json'))
-                os.remove(os.path.join(data_path,
-                                       'margin_last_modified.txt'))
+            with open(time_file_path) as file:
+                time_str = file.read()
+                timestamp = datetime.strptime(time_str, '%m/%d/%Y %H:%M:%S')
+                time_elapsed = datetime.now() - timestamp
+                time_elapsed = time_elapsed.total_seconds() / (60 * 60 * 24)
+                if time_elapsed > cache_time:
+                    os.remove(os.path.join(data_path, 'margin_of_error.json'))
+                    os.remove(os.path.join(data_path,
+                                           'margin_last_modified.txt'))
 
     elif data_name == "credentials":
         # Ensures that cached data is not older than 1 day
