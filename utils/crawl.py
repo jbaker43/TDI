@@ -4,8 +4,18 @@ import us
 import pandas as pd
 from census import Census
 import json
+import csv
 from datetime import datetime, date
 
+def load_map(filename):
+    map = dict()
+    with open(filename) as file:
+        scanner = csv.DictReader(file)
+        for row in scanner:
+            map[row['key']] = row['value']
+    return map
+
+credential_holder_map = load_map('../src/static/tables/credential_holder.csv')
 
 industry_map = {
     'C24050_001': 'Total',
