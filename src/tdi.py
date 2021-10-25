@@ -29,7 +29,7 @@ def get_state_data(reload=False) -> dict:
     Each county is a 5-digit FIPS code which is a combination of it's two-digit
     state FIPS code and it's additional 3 digits. Counties map to it's us
     package object and it's name
-    
+
     If reload, then data will re-read from system.
 
     Returns: dictionary
@@ -244,8 +244,6 @@ def table_query(fips_url):
     totals = []  # For recalculating percentages
 
     for code in codes:
-        print(code)
-
         # Lookup state and get fips code
         state_code = code[0:2]
         county_code = code[2:]
