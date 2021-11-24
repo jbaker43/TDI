@@ -98,9 +98,8 @@ def cache_expiration(state, county, codes,
 
 
 def census_api_request(state, county):
-    api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
-    c = Census(api_key)
+    c = Census(os.getenv('CENSUS_API_KEY'))
     occ_table = generate_table(c, state, county, occupation_map, "occupation")
     ind_table = generate_table(c, state, county, industry_map, "industry")
     edu_table = generate_table(c, state, county, education_map, "education")
@@ -265,8 +264,7 @@ def credential_holder(census_api, state, county, codes, data_name):
 
 
 if __name__ == '__main__':
-    api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
-    c = Census(api_key)
+    c = Census(os.getenv('CENSUS_API_KEY'))
     credential_holder(c, '47', '065', credential_holder_map)
     census_api_request('01', '001')

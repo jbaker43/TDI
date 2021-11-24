@@ -325,9 +325,8 @@ def credential_holder(census_api, state, county, codes, data_name):
 
 
 def census_api_request(state, county, year=2019):
-    api_key = "e47ca974808081f8978710f433125783362afc45"
     # Supply the Census wrapper with an api key
-    c = Census(api_key, year)
+    c = Census(os.getenv('CENSUS_API_KEY'), year)
     occupation_table = generate_table(c, state, county, occupation_map, "occupation", year)
     industry_table = generate_table(c, state, county, industry_map, "industry", year)
     education_table = generate_table(c, state, county, education_map, "education", year)
