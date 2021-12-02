@@ -1,20 +1,16 @@
 import pytest
-from tdi import get_county_name
+from tdi import get_county_name, get_county_name_full
 from tdi import get_state_data
-import censusapi
+
+def test_county_name_resolution():
+    assert get_county_name("47093").strip() == "Knox County"
+    assert get_county_name("47065").strip() == "Hamilton County"
+    assert get_county_name("47097").strip() == "Lauderdale County"
+    assert get_county_name("47133").strip() == "Overton County"
 
 
-def test():
-    def get_county_name1():
-        return get_county_name()
-
-def test2():
-    TN = "Tennessee"
-    return get_county_name(TN,47093)
-
-def test3():
-    def get_state_data1(states):
-        return get_state_data(fips)
-        return get_state_data(abbr)
-        return get_state_data(counties)
-        return get_state_data("Tennessee")
+def test_full_county_name_resolution():
+    assert get_county_name_full("47093").strip() == "Knox County, Tennessee"
+    assert get_county_name_full("47065").strip() == "Hamilton County, Tennessee"
+    assert get_county_name_full("47097").strip() == "Lauderdale County, Tennessee"
+    assert get_county_name_full("47133").strip() == "Overton County, Tennessee"

@@ -4,6 +4,7 @@ import os
 import json
 from datetime import datetime, date
 from pathlib import Path
+import pathlib
 import csv
 
 def load_map(filename):
@@ -14,11 +15,11 @@ def load_map(filename):
             map[row['key']] = row['value']
     return map
 
-
-industry_map = load_map('src/static/tables/industry.csv')
-occupation_map = load_map('src/static/tables/occupation.csv')
-education_map = load_map('src/static/tables/education.csv')
-credential_holder_map = load_map('src/static/tables/credential_holder.csv')
+table_path = os.path.join(pathlib.Path(__file__).parent.resolve(), 'static/tables')
+industry_map = load_map(os.path.join(table_path, 'industry.csv'))
+occupation_map = load_map(os.path.join(table_path, 'occupation.csv'))
+education_map = load_map(os.path.join(table_path, 'education.csv'))
+credential_holder_map = load_map(os.path.join(table_path, 'credential_holder.csv'))
 
 # How long data can remain in cache before refresh
 # stored in days.
