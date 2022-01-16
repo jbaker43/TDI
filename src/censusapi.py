@@ -203,8 +203,8 @@ def credential_holder(census_api, state, county, codes, data_name):
     current_year = date.today().year
     df_array = []
     years = []
-
-    for year in range(current_year - 4, current_year - 1):
+#Range of 4 years to query- threw exception since 2021 was not available yet. (was current year -4 and -1) We might decide on better implementation.
+    for year in range(current_year - 5, current_year - 2):
         data_path = cache_expiration(state, county, codes,
                                      data_name, year=year)
 
@@ -245,7 +245,7 @@ def credential_holder(census_api, state, county, codes, data_name):
 
     pd.set_option('display.max_columns', None)
     df = pd.concat(df_array)
-
+#No comment but this looks like it is for future predictions.
     for year in range(current_year - 1, current_year + 6):
         row = []
         years.append(year)
