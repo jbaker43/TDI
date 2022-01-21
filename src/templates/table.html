@@ -9,8 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/mobile-style.css') }}">
-    <!-- linking to .js printing file-->
-    <script src="tdiPrint.js"></script>
 
     <title>TDI</title>
 </head>
@@ -42,47 +40,37 @@
                 </li>
             </ul>
         <!-- Tables -->
-        <div class="tab-content" id="myTabContent">
 
+        <div class="tab-content" id="myTabContent">
             <div class="tab-pane fade show active pt-2 " id="labor-force" role="tabpanel" aria-labelledby="labor-force">
                 <div class="d-flex justify-content-center align-items-center p-4">
-
                     <h3 class="fw-bold">Labor Force Characteristics by Occupation and Industry</h3>
                 </div>
                 <h4 class="p-2">Occupation by Class of Worker for the Civilian Employed Population 25 Years and Over:</h4>
-<input type="button" onclick="printDiv('labor-force')" value="Print Labor Force" />
                 <div class="table-responsive-sm">
                     {{ tables[0]|safe }}
                     <hr>
-
+                </div>
                 <h4 class="p-2">Industry by Occupation for the Civilian Employed Population 25 Years and Over:</h4>
                 <div class="table-responsive-sm">
                     {{ tables[1]|safe }}
-                </div>
+
                 </div>
             </div>
-        </div>
             <div class="tab-pane fade pt-2" id="education" role="tabpanel" aria-labelledby="education">
                 <div class="d-flex justify-content-center align-items-center p-4">
-
                     <h3 class="fw-bold">Educational Attainment</h3>
                 </div>
                 <h4 class="p-2">Highest Educational Attainment for the Population 25 Years and Over:</h4>
- <input type="button" onclick="printDiv('education')" value="Print Education" />
-
                 <div class="table-responsive-sm">
-
                 {{ tables[2]|safe }}
-
                 </div>
             </div>
             <div class="tab-pane fade pt-2" id="socioeconomic" role="tabpanel" aria-labelledby="socioeconomic">
                 <div class="table-responsive-sm">
-                    <input type="button" onclick="printDiv('socioeconomic')" value="Print socioeconomic" />
                 {{ tables[3]|safe }}
                 </div>
             </div>
-            
              <div class="tab-pane fade pt-2 mx-3" id="talent" role="tabpanel" aria-labelledby="talent">
                  <div class="mx-5">
                  <div class="p-4">
